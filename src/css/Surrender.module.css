@@ -1,0 +1,982 @@
+ * {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+ }
+
+ :root {
+   --s-glow: rgba(192, 144, 48, 0.3);
+   --gs: #3a8fb5;
+   --gs-d: #2a6f8f;
+   --p: #7c4ba0;
+   --p-d: #5e3678;
+   --s: #b8892a;
+   --s-d: #8a6415;
+   --lp: #c0392b;
+   --lp-d: #962d22;
+   --done: #27ae60;
+   --done-d: #1e8449;
+   --white: #ffffff;
+   --cream: rgba(255, 255, 255, 0.95);
+   --glass: rgba(255, 255, 255, 0.12);
+   --glass-b: rgba(255, 255, 255, 0.22);
+   --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+   --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.25);
+   --emerald: #10b981;
+   --bg: #080c08;
+   --sage: #3a8fb5;
+   --purple: #8b5cf6;
+   --sage-light: #5ab0d4;
+   --text: #f0f4f0;
+ }
+
+ body {
+   font-family: 'Poppins', sans-serif;
+   min-height: 100vh;
+   background: #201808;
+   overflow-x: hidden;
+ }
+
+ @keyframes bgMotion {
+   0% {
+     transform: scale(1.0);
+   }
+
+   50% {
+     transform: scale(1.05);
+   }
+
+   100% {
+     transform: scale(1.0);
+   }
+ }
+
+ .bg {
+   position: fixed;
+   inset: 0;
+   z-index: 0;
+   background:
+     linear-gradient(180deg, rgba(30, 20, 10, 0.8) 0%, rgba(15, 10, 5, 0.95) 100%),
+     url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80') center/cover no-repeat;
+   animation: bgMotion 40s ease-in-out infinite;
+ }
+
+ nav {
+   position: sticky;
+   top: 0;
+   z-index: 100;
+   background: rgba(20, 10, 5, 0.8);
+   backdrop-filter: blur(20px);
+   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+   padding: 0 36px;
+   height: 62px;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+ }
+
+ .nav-logo {
+   font-size: 20px;
+   font-weight: 700;
+   color: #a7deff;
+ }
+
+ .nav-logo span {
+   color: #ffd48d;
+ }
+
+ .breadcrumb {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.5);
+   display: flex;
+   align-items: center;
+   gap: 8px;
+ }
+
+ .breadcrumb strong {
+   color: rgba(255, 255, 255, 0.9);
+   font-weight: 600;
+ }
+
+ .nav-avatar {
+   width: 36px;
+   height: 36px;
+   border-radius: 50%;
+   background: linear-gradient(135deg, var(--gs), var(--p));
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 13px;
+   font-weight: 700;
+   color: white;
+ }
+
+ .layout {
+   display: flex;
+   position: relative;
+   z-index: 1;
+   min-height: calc(100vh - 62px);
+ }
+
+ .sidebar {
+   width: 64px;
+   justify-content: space-between;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   padding: 20px 0;
+   gap: 4px;
+   border-right: 1px solid var(--border);
+   background: rgba(8, 12, 8, 0.5);
+   backdrop-filter: blur(12px);
+   flex-shrink: 0;
+   position: fixed;
+   top: 62px;
+   left: 0;
+   z-index: 101;
+   top: 62px;
+   height: calc(100vh - 62px);
+ }
+
+ .sidebar .section-top,
+ .sidebar .section-bottom {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   /* space between buttons inside sections */
+ }
+
+ .sb-btn {
+   width: 40px;
+   height: 40px;
+   border-radius: 10px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s;
+   color: var(--text-dim);
+   font-size: 16px;
+   position: relative;
+   background: transparent;
+   border: none;
+ }
+
+ .sb-btn:hover {
+   background: var(--surface-hover);
+   color: var(--text);
+ }
+
+ .sb-btn.active {
+   background: linear-gradient(135deg, rgba(58, 143, 181, 0.25), rgba(58, 143, 181, 0.1));
+   border: 1px solid rgba(58, 143, 181, 0.3);
+   color: var(--sage-light);
+ }
+
+ .sb-btn .sb-tip {
+   position: absolute;
+   left: 52px;
+   background: rgba(0, 0, 0, 0.9);
+   border: 1px solid var(--border-bright);
+   color: var(--text);
+   padding: 5px 10px;
+   border-radius: 6px;
+   font-size: 11px;
+   font-weight: 500;
+   white-space: nowrap;
+   pointer-events: none;
+   opacity: 0;
+   transition: opacity 0.15s;
+   font-family: 'DM Sans', sans-serif;
+ }
+
+ .sb-btn:hover .sb-tip {
+   opacity: 1;
+ }
+
+ .sb-spacer {
+   flex: 1;
+ }
+
+ /* SVG Icons */
+ .icon {
+   width: 18px;
+   height: 18px;
+   stroke: currentColor;
+   fill: none;
+   stroke-width: 1.8;
+   stroke-linecap: round;
+   stroke-linejoin: round;
+ }
+
+ .content {
+   margin-left: 60px;
+   flex: 1;
+   padding: 32px 36px;
+   overflow-y: auto;
+   display: grid;
+
+   gap: 24px;
+   align-content: start;
+ }
+
+ /* STAGE STRIP — full width */
+ .stage-strip {
+   grid-column: 1/-1;
+   display: flex;
+   gap: 8px;
+   margin-bottom: 4px;
+ }
+
+ .ss-pill {
+   flex: 1;
+   padding: 6px 0;
+   border-radius: 11px;
+   font-size: 12px;
+   font-weight: 700;
+   border: 1.5px solid;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   text-align: center;
+ }
+
+ .ss-done {
+   background: rgba(39, 174, 96, 0.12);
+   border-color: rgba(39, 174, 96, 0.4);
+   color: #5ddb8e;
+ }
+
+ .ss-active {
+   background: rgba(192, 144, 48, 0.18);
+   border-color: rgba(192, 144, 48, 0.5);
+   color: #f0c060;
+ }
+
+ .ss-locked {
+   background: rgba(255, 255, 255, 0.04);
+   border-color: rgba(255, 255, 255, 0.1);
+   color: rgba(255, 255, 255, 0.3);
+ }
+
+ .fullPillLink {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   /* optional – centers content if needed */
+   width: 100%;
+   height: 100%;
+   padding: inherit;
+   /* keeps your existing pill padding */
+   color: inherit;
+   text-decoration: none;
+ }
+
+ /* Optional: better hover/focus for the whole pill */
+ .ss-pill:hover .fullPillLink,
+ .ss-pill:focus-within .fullPillLink {
+   /* You can move hover styles here if you want */
+ }
+
+ /* Make sure the parent pill allows it */
+ .ss-pill {
+   position: relative;
+   /* important if you add pseudo-elements later */
+   cursor: pointer;
+ }
+
+ .ss-locked {
+   cursor: not-allowed;
+   opacity: 0.6;
+ }
+
+ .ss-locked .fullPillLink {
+   pointer-events: none;
+   /* disables click on locked steps */
+ }
+
+ /* MODULE HEADER — full width */
+ .mod-header {
+   grid-column: 1/-1;
+   background: linear-gradient(135deg, rgba(192, 144, 48, 0.1), rgba(138, 100, 21, 0.05));
+   backdrop-filter: blur(30px);
+   border: none;
+   border-radius: 24px;
+   padding: 32px 36px;
+   position: relative;
+   overflow: hidden;
+   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+ }
+
+ .mod-header::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   height: 2px;
+   background: linear-gradient(90deg, transparent, var(--s), transparent);
+   opacity: 0.5;
+ }
+
+ .mod-eyebrow {
+   font-size: 10px;
+   font-weight: 600;
+   letter-spacing: 2px;
+   text-transform: uppercase;
+   color: var(--s);
+   margin-bottom: 10px;
+ }
+
+ .mod-title {
+   font-size: 30px;
+   font-weight: 700;
+   color: white;
+   margin-bottom: 4px;
+ }
+
+ .mod-subtitle {
+   font-size: 13px;
+   font-style: italic;
+   color: rgba(255, 255, 255, 0.5);
+   margin-bottom: 14px;
+ }
+
+ .mod-desc {
+   font-size: 13px;
+   color: rgba(255, 255, 255, 0.7);
+   line-height: 1.75;
+   max-width: 700px;
+ }
+
+ .mod-scripture {
+   margin-top: 16px;
+   padding-top: 14px;
+   border-top: 1px solid rgba(255, 255, 255, 0.1);
+   font-size: 12px;
+   font-style: italic;
+   color: rgba(255, 255, 255, 0.45);
+ }
+
+ /* LEFT PANEL */
+ .left-panel {}
+
+ /* SURRENDER LIST CARD */
+ .surrender-card {
+   background: rgba(255, 255, 255, 0.03);
+   backdrop-filter: blur(25px);
+   border: none;
+   border-radius: 20px;
+   padding: 24px;
+   margin-bottom: 24px;
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+ }
+
+ .sc-title {
+   font-size: 15px;
+   font-weight: 700;
+   color: white;
+   margin-bottom: 4px;
+   display: flex;
+   align-items: center;
+   gap: 8px;
+ }
+
+ .sc-sub {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.5);
+   margin-bottom: 18px;
+ }
+
+ .surrender-items {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   margin-bottom: 18px;
+   min-height: 80px;
+ }
+
+ .si-item {
+   display: flex;
+   align-items: flex-start;
+   gap: 12px;
+   background: rgba(192, 144, 48, 0.1);
+   border: 1px solid rgba(192, 144, 48, 0.25);
+   border-radius: 12px;
+   padding: 12px 14px;
+   animation: fadeIn 0.3s ease;
+ }
+
+ @keyframes fadeIn {
+   from {
+     opacity: 0;
+     transform: translateY(-8px)
+   }
+
+   to {
+     opacity: 1;
+     transform: translateY(0)
+   }
+ }
+
+ .si-leaf {
+   font-size: 18px;
+   flex-shrink: 0;
+   margin-top: 1px;
+ }
+
+ .si-text {
+   flex: 1;
+   font-size: 13px;
+   color: rgba(255, 255, 255, 0.85);
+   line-height: 1.5;
+ }
+
+ .si-del {
+   background: none;
+   border: none;
+   color: rgba(255, 255, 255, 0.25);
+   font-size: 16px;
+   cursor: pointer;
+   padding: 0 2px;
+   transition: color 0.2s;
+   flex-shrink: 0;
+ }
+
+ .si-del:hover {
+   color: rgba(224, 85, 85, 0.8);
+ }
+
+ .add-row {
+   display: flex;
+   gap: 10px;
+ }
+
+ .add-input {
+   flex: 1;
+   background: rgba(255, 255, 255, 0.06);
+   border: 1.5px solid rgba(255, 255, 255, 0.15);
+   border-radius: 12px;
+   padding: 11px 16px;
+   font-family: 'Poppins', sans-serif;
+   font-size: 12px;
+   color: white;
+   outline: none;
+ }
+
+ .add-input::placeholder {
+   color: rgba(255, 255, 255, 0.3);
+ }
+
+ .add-input:focus {
+   border-color: rgba(192, 144, 48, 0.5);
+   background: rgba(255, 255, 255, 0.08);
+ }
+
+ .add-btn {
+   background: var(--s);
+   color: white;
+   border: none;
+   border-radius: 12px;
+   padding: 11px 18px;
+   font-family: 'Poppins', sans-serif;
+   font-size: 12px;
+   font-weight: 700;
+   cursor: pointer;
+   transition: all 0.2s;
+   white-space: nowrap;
+ }
+
+ .add-btn:hover {
+   background: var(--s-d);
+ }
+
+ .complete-card {
+   background: rgba(255, 255, 255, 0.03);
+   backdrop-filter: blur(25px);
+   border: none;
+   border-radius: 20px;
+   padding: 24px;
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+ }
+
+ .cc-title {
+   font-size: 14px;
+   font-weight: 700;
+   color: white;
+   margin-bottom: 4px;
+ }
+
+ .cc-sub {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.5);
+   margin-bottom: 14px;
+   line-height: 1.6;
+ }
+
+ .cc-actions {
+   display: flex;
+   gap: 10px;
+ }
+
+ .btn-gold {
+   background: var(--s);
+   color: white;
+   border: none;
+   border-radius: 10px;
+   padding: 11px 20px;
+   font-family: 'Poppins', sans-serif;
+   font-size: 12px;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+ }
+
+ .btn-gold:hover {
+   background: var(--s-d);
+ }
+
+ .btn-ghost {
+   background: rgba(255, 255, 255, 0.07);
+   color: rgba(255, 255, 255, 0.6);
+   border: 1px solid rgba(255, 255, 255, 0.15);
+   border-radius: 10px;
+   padding: 11px 20px;
+   font-family: 'Poppins', sans-serif;
+   font-size: 12px;
+   font-weight: 500;
+   cursor: pointer;
+ }
+
+ /* RIGHT PANEL — LifePlan preview */
+ .right-panel {}
+
+ .lifeplan-preview {
+   background: rgba(255, 255, 255, 0.03);
+   backdrop-filter: blur(25px);
+   border: none;
+   border-radius: 20px;
+   overflow: hidden;
+   margin-bottom: 24px;
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+ }
+
+ .lp-head {
+   background: linear-gradient(135deg, rgba(192, 57, 43, 0.3), rgba(150, 45, 34, 0.15));
+   padding: 18px 22px;
+   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+ }
+
+ .lp-head-eyebrow {
+   font-size: 9px;
+   font-weight: 600;
+   letter-spacing: 2px;
+   text-transform: uppercase;
+   color: rgb(241 234 233 / 90%);
+   margin-bottom: 6px;
+ }
+
+ .lp-head-title {
+   font-size: 18px;
+   font-weight: 700;
+   color: white;
+ }
+
+ .lp-head-sub {
+   font-size: 12px;
+   color: rgba(255, 255, 255, 0.5);
+   margin-top: 3px;
+ }
+
+ .lp-modules {
+   padding: 16px 16px;
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+ }
+
+ .lp-mod {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   background: rgba(255, 255, 255, 0.05);
+   border: 1px solid rgba(255, 255, 255, 0.09);
+   border-radius: 12px;
+   padding: 13px 14px;
+   opacity: 0.5;
+ }
+
+ .lpm-icon {
+   font-size: 22px;
+   flex-shrink: 0;
+ }
+
+ .lpm-info {
+   flex: 1;
+ }
+
+ .lpm-num {
+   font-size: 9px;
+   font-weight: 600;
+   letter-spacing: 1.5px;
+   text-transform: uppercase;
+   color: rgba(255, 255, 255, 0.3);
+ }
+
+ .lpm-title {
+   font-size: 13px;
+   font-weight: 600;
+   color: rgba(255, 255, 255, 0.7);
+ }
+
+ .lpm-sub {
+   font-size: 10px;
+   font-style: italic;
+   color: rgba(255, 255, 255, 0.35);
+ }
+
+ .lpm-lock {
+   font-size: 16px;
+   color: rgba(255, 255, 255, 0.25);
+ }
+
+ /* DELIVERABLES PREVIEW */
+ .deliverables-preview {
+   background: rgba(255, 255, 255, 0.03);
+   backdrop-filter: blur(25px);
+   border: none;
+   border-radius: 20px;
+   padding: 24px;
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+ }
+
+ .dp-title {
+   font-size: 14px;
+   font-weight: 700;
+   color: white;
+   margin-bottom: 4px;
+ }
+
+ .dp-sub {
+   font-size: 11px;
+   color: rgba(255, 255, 255, 0.45);
+   margin-bottom: 14px;
+ }
+
+ .doc-cards {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+ }
+
+ .doc-card {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   background: rgba(255, 255, 255, 0.05);
+   border-radius: 10px;
+   padding: 12px 14px;
+   opacity: 0.5;
+ }
+
+ .doc-icon {
+   font-size: 24px;
+   flex-shrink: 0;
+ }
+
+ .doc-info {
+   flex: 1;
+ }
+
+ .doc-label {
+   font-size: 9px;
+   font-weight: 600;
+   letter-spacing: 1.5px;
+   text-transform: uppercase;
+   color: rgba(255, 255, 255, 0.3);
+ }
+
+ .doc-name {
+   font-size: 12px;
+   font-weight: 600;
+   color: rgba(255, 255, 255, 0.6);
+ }
+
+ .doc-status {
+   font-size: 10px;
+   font-weight: 700;
+   color: rgba(255, 255, 255, 0.25);
+ }
+
+ .screen-badge {
+   position: fixed;
+   bottom: 20px;
+   right: 20px;
+   background: rgba(0, 0, 0, 0.7);
+   backdrop-filter: blur(10px);
+   color: rgba(255, 255, 255, 0.7);
+   padding: 6px 14px;
+   border-radius: 20px;
+   font-size: 11px;
+   font-family: 'Poppins', sans-serif;
+   border: 1px solid rgba(255, 255, 255, 0.15);
+   z-index: 999;
+ }
+
+ /* ====================== RESPONSIVE DESIGN ====================== */
+
+ @media (max-width: 1024px) {
+   .content {
+     padding: 24px 20px;
+     margin-left: 64px;
+   }
+
+   .mod-title {
+     font-size: 26px;
+   }
+
+   .panels-container {
+     gap: 20px;
+   }
+
+   .right-panel {
+     width: 340px !important;
+   }
+ }
+
+ @media (max-width: 768px) {
+   .layout {
+     flex-direction: column;
+   }
+
+   .sidebar {
+     width: 100%;
+     height: 60px;
+     flex-direction: row;
+     position: fixed;
+     bottom: 0;
+     top: auto;
+     border-right: none;
+     border-top: 1px solid var(--border);
+     padding: 0 20px;
+     justify-content: space-around;
+   }
+
+   .sidebar .section-top,
+   .sidebar .section-bottom {
+     flex-direction: row;
+     gap: 8px;
+     width: 100%;
+     justify-content: center;
+   }
+
+   .sb-btn {
+     width: 48px;
+     height: 48px;
+   }
+
+   .sb-tip {
+     display: none;
+   }
+
+   .content {
+     margin-left: 0 !important;
+     padding: 20px 16px;
+   }
+
+   .stage-strip {
+     flex-wrap: nowrap;
+     overflow-x: auto;
+     padding-bottom: 8px;
+     gap: 6px;
+   }
+
+   .ss-pill {
+     flex: 0 0 auto;
+     min-width: 110px;
+     padding: 8px 12px;
+     font-size: 11px;
+   }
+
+   .mod-header {
+     padding: 20px 18px;
+   }
+
+   .mod-title {
+     font-size: 24px;
+   }
+
+   .mod-desc {
+     font-size: 13px;
+     line-height: 1.6;
+   }
+
+   .panels-container {
+     flex-direction: column;
+     gap: 24px;
+   }
+
+   .left-panel,
+   .right-panel {
+     width: 100% !important;
+   }
+
+   .right-panel {
+     order: -1;
+   }
+
+   .cc-actions {
+     flex-direction: column;
+     gap: 12px;
+   }
+
+   .btn-gold,
+   .btn-ghost {
+     width: 100%;
+     justify-content: center;
+   }
+
+   .add-row {
+     flex-direction: column;
+     gap: 10px;
+   }
+
+   .add-btn {
+     width: 100%;
+   }
+
+   .screen-badge {
+     bottom: 16px;
+     right: 50%;
+     transform: translateX(50%);
+     font-size: 10px;
+     padding: 5px 12px;
+   }
+ }
+
+ @media (max-width: 480px) {
+   .content {
+     padding: 16px 14px;
+   }
+
+   .mod-header {
+     padding: 18px 16px;
+   }
+
+   .surrender-card,
+   .complete-card,
+   .lifeplan-preview,
+   .deliverables-preview {
+     padding: 18px 16px;
+   }
+
+   .mod-title {
+     font-size: 22px;
+   }
+
+   .ss-pill {
+     min-width: 100px;
+     font-size: 10.5px;
+   }
+ }
+
+ /* ====================== RESPONSIVE DESIGN ====================== */
+
+ /* 1. For Laptops/Tablets - Slight padding adjustments */
+ @media (max-width: 1024px) {
+   .content {
+     padding: 24px 20px;
+     margin-left: 64px;
+   }
+ }
+
+ /* 2. For Mobile/Small Windows - MOVE SIDEBAR TO TOP */
+ @media (max-width: 768px) {
+   .layout {
+     flex-direction: column;
+     /* Stack sidebar and content vertically */
+   }
+
+   .sidebar {
+     position: sticky;
+     /* Keep it at the top when scrolling */
+     top: 62px;
+     left: 0;
+     width: 100%;
+     /* Full width instead of 64px */
+     height: auto;
+     /* Shrink to fit content */
+     flex-direction: row;
+     /* Buttons sit side-by-side */
+     padding: 10px 20px;
+     border-right: none;
+     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+     justify-content: center;
+     gap: 20px;
+   }
+
+   /* Adjust the inner sections to be rows too */
+   .sidebar .section-top,
+   .sidebar .section-bottom {
+     flex-direction: row;
+     gap: 15px;
+   }
+
+   /* Remove the vertical spacer since we are in a row now */
+   .sb-spacer {
+     display: none;
+   }
+
+   .content {
+     margin-left: 0 !important;
+     /* Remove the left margin */
+     padding: 20px 16px;
+   }
+
+   /* Allow the horizontal stage strip to scroll if it's too wide */
+   .stage-strip {
+     overflow-x: auto;
+     white-space: nowrap;
+     display: flex;
+     padding-bottom: 10px;
+   }
+
+   .ss-pill {
+     flex: 0 0 auto;
+     min-width: 120px;
+   }
+
+   /* Stack panels vertically */
+   .panels-container {
+     display: flex;
+     flex-direction: column;
+   }
+
+   .left-panel,
+   .right-panel {
+     width: 100% !important;
+   }
+ }
+
+ /* 3. Small Mobile Phones */
+ @media (max-width: 480px) {
+   .mod-title {
+     font-size: 24px;
+   }
+
+   .add-row {
+     flex-direction: column;
+     /* Stack input and button */
+   }
+
+   .add-btn {
+     width: 100%;
+   }
+
+   .cc-actions {
+     flex-direction: column;
+   }
+ }
