@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Heading from "../components/Heading";
 import useSubmit from "../hooks/useSubmit.ts";
-import styles from "../css/SignIn-password.module.css";
+import styles from "../css/SignIn-Password.module.css";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
