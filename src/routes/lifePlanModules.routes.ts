@@ -1,0 +1,28 @@
+import { Router } from "express";
+import authMiddleware from "../middlewares/auth.middleware";
+import lifePlanModulesController from "../controllers/lifePlanModules.controller";
+
+const router = Router();
+
+router.get(
+  "/life-plan-modules",
+  authMiddleware,
+  lifePlanModulesController.getLifePlanModules,
+);
+router.put(
+  "/life-plan-modules",
+  authMiddleware,
+  lifePlanModulesController.upsertLifePlanModules,
+);
+router.delete(
+  "/life-plan-modules",
+  authMiddleware,
+  lifePlanModulesController.resetLifePlanModules,
+);
+router.get(
+  "/life-plan-modules/pdf/:document",
+  authMiddleware,
+  lifePlanModulesController.downloadLifePlanModulesPdf,
+);
+
+export default router;

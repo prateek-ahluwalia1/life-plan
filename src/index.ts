@@ -1,0 +1,36 @@
+import "dotenv/config";
+import express, { type Express } from "express";
+import cors from "cors";
+import connectDB from "./config/connect.db";
+import authRoutes from "./routes/auth.routes";
+import whereIAmNowRoutes from "./routes/whereIAmNow.routes";
+import lifePlanModulesRoutes from "./routes/lifePlanModules.routes";
+import chatRoutes from "./routes/chat.routes";
+
+const PORT = process.env.PORT;
+
+const app: Express = express();
+
+const corsOptions = {
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+  credentials: true,
+  exposedHeaders: ["Content-Disposition"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+  ],
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/modules", whereIAmNowRoutes);
+app.use("/api/v1/modules", lifePlanModulesRoutes);
+app.use("/api/v1/chat", chatRoutes);
+connectDB();
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
