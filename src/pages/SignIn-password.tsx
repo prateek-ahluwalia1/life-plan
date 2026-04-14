@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import styles from "../css/SignIn-password.module.css";
+import styles from "../css/SignIn-Password.module.css";
 import Heading from "../components/Heading";
 import useSubmit from "../hooks/useSubmit.ts";
 import { toast } from "react-toastify";

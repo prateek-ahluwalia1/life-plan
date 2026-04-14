@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../store/slices/authSlice";
-import styles from "../css/SignIn-password.module.css";
+import styles from "../css/SignIn-Password.module.css";
 import Heading from "../components/Heading";
 import useSubmit from "../hooks/useSubmit.ts";
 export const LoginPassword = () => {
@@ -38,8 +38,6 @@ export const LoginPassword = () => {
 
     navigate("/dashboard");
   };
-
-
 
   if (!email) return null;
 
