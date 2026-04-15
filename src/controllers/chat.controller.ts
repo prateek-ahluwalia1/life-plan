@@ -84,8 +84,9 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
+    const choice = response.choices[0];
     const assistantMessage =
-      response.choices[0].message.content || "No response text returned.";
+      choice?.message?.content || "No response text returned";
 
     // Store messages in conversation history
     history.push(userMessage);

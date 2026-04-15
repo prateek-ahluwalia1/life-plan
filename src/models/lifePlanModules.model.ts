@@ -18,6 +18,36 @@ const progressSchema = new Schema<LifePlanProgress>(
   { _id: false },
 );
 
+const turningPointSchema = new Schema(
+  {
+    title: { type: String, default: "" },
+    description: { type: String, default: "" },
+    impact: { type: String, default: "" },
+  },
+  { _id: false },
+);
+
+const module3Schema = new Schema(
+  {
+    turningPoints: {
+      type: [turningPointSchema],
+      default: [
+        { title: "", description: "", impact: "" },
+        { title: "", description: "", impact: "" },
+        { title: "", description: "", impact: "" },
+      ],
+    },
+    keyDecisions: { type: String, default: "" },
+    shapingRelationships: { type: String, default: "" },
+    challengesOvercome: { type: String, default: "" },
+    achievements: { type: String, default: "" },
+    spiritualMoments: { type: String, default: "" },
+    reflectionNotes: { type: String, default: "" },
+    isComplete: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
 const lifePlanModulesSchema = new Schema<ILifePlanModules>(
   {
     userId: {
@@ -29,6 +59,10 @@ const lifePlanModulesSchema = new Schema<ILifePlanModules>(
     },
     progress: {
       type: progressSchema,
+      default: () => ({}),
+    },
+    module3: {
+      type: module3Schema,
       default: () => ({}),
     },
     surrenderItems: {
