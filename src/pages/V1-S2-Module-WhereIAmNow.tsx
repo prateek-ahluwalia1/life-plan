@@ -312,7 +312,7 @@ const WhereIAmNow = () => {
                   <div className={`${styles["msg-av"]} ${styles.ai}`}>✦</div>
                   <div className={styles["msg-body"]}>
                     <div className={`${styles.bubble} ${styles.ai}`}>
-                      Welcome, Ron. I'm here to walk with you through your
+                      Welcome, {userdata?.name || "there"}. I'm here to walk with you through your
                       Current State Assessment.
                       <br />
                       <br />
@@ -337,7 +337,7 @@ const WhereIAmNow = () => {
                       been successful by most measures but something feels...
                       unfinished. Like I'm moving through life on autopilot.
                     </div>
-                    <div className={styles["msg-time"]}>Ron</div>
+                    <div className={styles["msg-time"]}>{userdata?.name || "there"}</div>
                   </div>
                 </div>
 
@@ -345,7 +345,7 @@ const WhereIAmNow = () => {
                   <div className={`${styles["msg-av"]} ${styles.ai}`}>✦</div>
                   <div className={styles["msg-body"]}>
                     <div className={`${styles.bubble} ${styles.ai}`}>
-                      That's a really significant thing to name, Ron.
+                      That's a really significant thing to name, {userdata?.name || "there"}.
                       "Successful but restless" — that tension is actually one
                       of the most important clues we can start with.
                       <br />
@@ -365,7 +365,7 @@ const WhereIAmNow = () => {
                       I'm not sure it's what I'm supposed to be doing long-term.
                       And spiritually, I feel like I've been coasting.
                     </div>
-                    <div className={styles["msg-time"]}>Ron</div>
+                    <div className={styles["msg-time"]}>{userdata?.name || "there"}</div>
                   </div>
                 </div>
 

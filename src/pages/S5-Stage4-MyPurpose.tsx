@@ -10,6 +10,9 @@ import {
   fetchLifePlanDeliverablesFromServer,
   saveLifePlanDeliverablesToServer,
 } from "../utils/exports";
+import useModuleAccess from "../hooks/useModuleAccess";
+import ModuleGatingBlock from "../components/ModuleGatingBlock";
+import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
 
 const MyPurpose = () => {
   const [missionText, setMissionText] = useState("");
@@ -19,6 +22,11 @@ const MyPurpose = () => {
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
   const token = useSelector((state: RootState) => state.auth.token);
+
+  // Module gating and restart
+  const { isLocked } = useModuleAccess("my-purpose");
+  const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const profileInitials = (() => {
     const source = (userdata?.name || userdata?.email || "U").trim();
@@ -71,6 +79,36 @@ const MyPurpose = () => {
     navigate("/");
   };
 
+  // Module restart handlers
+  const handleRestart = async () => {
+    if (!token) return;
+
+    try {
+      const result = await requestModuleRestart(token, "modules/my-purpose");
+      if (result?.confirmationId) {
+        setRestartConfirmId(result.confirmationId);
+        setShowRestartConfirm(true);
+      }
+    } catch (err) {
+      console.error("Failed to initiate restart:", err);
+    }
+  };
+
+  const handleConfirmRestart = async () => {
+    if (!token || !restartConfirmId) return;
+
+    try {
+      await confirmModuleRestart(token, "modules/my-purpose", restartConfirmId);
+      setShowRestartConfirm(false);
+      setRestartConfirmId(null);
+      setMissionText("");
+      setChatInput("");
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to confirm restart:", err);
+    }
+  };
+
   const handleUnlockMyPurpose = () => {
     if (!token) {
       return;
@@ -120,6 +158,15 @@ const MyPurpose = () => {
       "mission-statement.pdf",
     );
   };
+
+  // Module gating check
+  if (isLocked) {
+    return <ModuleGatingBlock 
+      moduleName="My Purpose" 
+      requiredModules={["surrender"]} 
+      onRetry={() => window.location.reload()}
+    />;
+  }
 
   return (
     <div className={styles.container}>
@@ -280,6 +327,20 @@ const MyPurpose = () => {
           </div>
 
           <div className={styles["section-bottom"]}>
+            <button
+              onClick={handleRestart}
+              className={styles["sb-btn"]}
+              style={{ color: "#ff9800" }}
+            >
+              <svg className={styles.icon} viewBox="0 0 24 24">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+              <span className={styles["sb-tip"]}>Restart Module</span>
+            </button>
+
             <div className={styles["sb-spacer"]}></div>
 
             <button
@@ -438,7 +499,7 @@ const MyPurpose = () => {
                   <div className={`${styles["msg-av"]} ${styles.ai}`}>✦</div>
                   <div className={styles["msg-body"]}>
                     <div className={`${styles.bubble} ${styles.ai}`}>
-                      Ron, you've done something significant. You've looked
+                      {userdata?.name || "there"}, you've done something significant. You've looked
                       honestly at where you are, traced how you got here,
                       understood how you're wired, named what's been stopping
                       you, and released what needed to go.
@@ -465,7 +526,7 @@ const MyPurpose = () => {
                       believe I'm meant to help others do the same. Not give
                       them answers — but help them find their own.
                     </div>
-                    <div className={styles["msg-time"]}>Ron</div>
+                    <div className={styles["msg-time"]}>{userdata?.name || "there"}</div>
                   </div>
                 </div>
 
@@ -474,7 +535,7 @@ const MyPurpose = () => {
                   <div className={`${styles["msg-av"]} ${styles.ai}`}>✦</div>
                   <div className={styles["msg-body"]}>
                     <div className={`${styles.bubble} ${styles.ai}`}>
-                      That's a powerful instinct, Ron. "Guide not answer-giver"
+                      That's a powerful instinct, {userdata?.name || "there"}. "Guide not answer-giver"
                       — that's a meaningful distinction. It speaks to how you're
                       wired.
                       <br />
@@ -498,7 +559,7 @@ const MyPurpose = () => {
                       achieved things but sense there's something more. That was
                       me for years.
                     </div>
-                    <div className={styles["msg-time"]}>Ron</div>
+                    <div className={styles["msg-time"]}>{userdata?.name || "there"}</div>
                   </div>
                 </div>
 
@@ -547,6 +608,67 @@ const MyPurpose = () => {
       <div className={styles["screen-badge"]}>
         Screen 5 of 6 — Stage 4: My Purpose
       </div>
+
+      {/* Restart Confirmation Dialog */}
+      {showRestartConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "400px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#d32f2f" }}>Confirm Module Restart</h3>
+            <p>
+              This will permanently delete your mission statement and purpose notes.
+              <strong> This action cannot be undone.</strong>
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowRestartConfirm(false)}
+                style={{
+                  padding: "10px 20px",
+                  background: "#f5f5f5",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRestart}
+                style={{
+                  padding: "10px 20px",
+                  background: "#d32f2f",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

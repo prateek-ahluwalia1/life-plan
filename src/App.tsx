@@ -11,9 +11,11 @@ import PageLoader from "./components/Loader";
 const LifePlan = lazy(() => import("./pages/LifePlan"));
 const WatchVideo = lazy(() => import("./pages/Watch-Video"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const GettingStarted = lazy(() => import("./pages/GettingStarted"));
 const WhereIAmNow = lazy(() => import("./pages/S2-Module-WhereIAmNow"));
 const Introduction = lazy(() => import("./pages/Introduction"));
 const Perspective = lazy(() => import("./pages/S3-Stage2-Perspective"));
+const HowIGotHere = lazy(() => import("./pages/S3-Module3-HowIGotHere"));
 const Surrender = lazy(() => import("./pages/S4-Stage3-Surrender"));
 const MyPurpose = lazy(() => import("./pages/S5-Stage4-MyPurpose"));
 const JourneyComplete = lazy(() => import("./pages/S6-JourneyComplete"));
@@ -111,6 +113,14 @@ function App() {
             }
           />
           <Route
+            path="/getting-started"
+            element={
+              <ProtectedRoute>
+                <GettingStarted />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/where-i-am-now"
             element={
               <ProtectedRoute>
@@ -131,6 +141,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Perspective />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/module-3"
+            element={
+              <ProtectedRoute>
+                <HowIGotHere />
               </ProtectedRoute>
             }
           />

@@ -5,6 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/slices/authSlice";
 import type { RootState } from "../store/store";
 import { apiURL, downloadModulePdfFromServer } from "../utils/exports";
+import useModuleAccess from "../hooks/useModuleAccess";
+import ModuleGatingBlock from "../components/ModuleGatingBlock";
+import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
 
 const defaultSurrenderItems = [
   "The need to have everything figured out before I can move forward",
@@ -18,6 +21,11 @@ const SurrenderStage = () => {
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
   const token = useSelector((state: RootState) => state.auth.token);
+
+  // Module gating and restart
+  const { isLocked } = useModuleAccess("surrender");
+  const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const profileInitials = (() => {
     const source = (userdata?.name || userdata?.email || "U").trim();
@@ -134,6 +142,34 @@ const SurrenderStage = () => {
     navigate("/");
   };
 
+  // Module restart handlers
+  const handleRestart = async () => {
+    if (!token) return;
+
+    try {
+      const result = await requestModuleRestart(token, "modules/surrender");
+      if (result?.confirmationId) {
+        setRestartConfirmId(result.confirmationId);
+        setShowRestartConfirm(true);
+      }
+    } catch (err) {
+      console.error("Failed to initiate restart:", err);
+    }
+  };
+
+  const handleConfirmRestart = async () => {
+    if (!token || !restartConfirmId) return;
+
+    try {
+      await confirmModuleRestart(token, "modules/surrender", restartConfirmId);
+      setShowRestartConfirm(false);
+      setRestartConfirmId(null);
+      setItems(defaultSurrenderItems);
+    } catch (err) {
+      console.error("Failed to confirm restart:", err);
+    }
+  };
+
   const handleUnlockSurrender = () => {
     if (!token) {
       return;
@@ -167,6 +203,15 @@ const SurrenderStage = () => {
       "surrender-release-list.pdf",
     );
   };
+
+  // Module gating check
+  if (isLocked) {
+    return <ModuleGatingBlock 
+      moduleName="Surrender" 
+      requiredModules={["perspective"]} 
+      onRetry={() => window.location.reload()}
+    />;
+  }
 
   return (
     <div className={styles.container}>
@@ -306,6 +351,20 @@ const SurrenderStage = () => {
             </Link>
           </div>
           <div className={styles["section-bottom"]}>
+            <button
+              onClick={handleRestart}
+              className={styles["sb-btn"]}
+              style={{ color: "#ff9800" }}
+            >
+              <svg className={styles.icon} viewBox="0 0 24 24">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+              <span className={styles["sb-tip"]}>Restart Module</span>
+            </button>
+
             <button
               onClick={handleLogout}
               className={styles["sb-btn"]}
@@ -592,6 +651,67 @@ const SurrenderStage = () => {
       <div className={styles["screen-badge"]}>
         Screen 4 of 6 — Stage 3: Surrender
       </div>
+
+      {/* Restart Confirmation Dialog */}
+      {showRestartConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "400px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#d32f2f" }}>Confirm Module Restart</h3>
+            <p>
+              This will permanently delete all your surrender items and notes.
+              <strong> This action cannot be undone.</strong>
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowRestartConfirm(false)}
+                style={{
+                  padding: "10px 20px",
+                  background: "#f5f5f5",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRestart}
+                style={{
+                  padding: "10px 20px",
+                  background: "#d32f2f",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

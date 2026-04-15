@@ -222,7 +222,7 @@ const Dashboard = () => {
               <div className={styles["wb-tag"]}>
                 Your LifePlan Journey Dashboard
               </div>
-              <div className={styles["wb-title"]}>Welcome back, Ron</div>
+              <div className={styles["wb-title"]}>Welcome back, {userdata?.name || "there"}!</div>
               <div className={styles["wb-sub"]}>
                 {progress.mypurpose ? (
                   <>
@@ -282,22 +282,33 @@ const Dashboard = () => {
             <div className={styles["stat-card"]}>
               <div className={styles["stat-label"]}>Overall Progress</div>
               <div className={styles["stat-val"]}>
-                10<span>%</span>
+                {Math.round(
+                  ((Object.values(progress).filter(Boolean).length / 4) * 100)
+                )}
+                <span>%</span>
               </div>
               <div className={styles["stat-sub"]}>Journey underway</div>
               <div className={styles["prog-bar"]}>
                 <div
                   className={styles["prog-fill"]}
-                  style={{ width: "10%", background: "var(--gs)" }}
+                  style={{
+                    width: `${Math.round(
+                      (Object.values(progress).filter(Boolean).length / 4) * 100
+                    )}%`,
+                    background: "var(--gs)",
+                  }}
                 ></div>
               </div>
             </div>
             <div className={styles["stat-card"]}>
               <div className={styles["stat-label"]}>Modules Complete</div>
               <div className={styles["stat-val"]}>
-                1 <span>/ 10</span>
+                {Object.values(progress).filter(Boolean).length * 2 + 1}
+                <span> / 10</span>
               </div>
-              <div className={styles["stat-sub"]}>9 remaining</div>
+              <div className={styles["stat-sub"]}>
+                {Math.max(0, 9 - (Object.values(progress).filter(Boolean).length * 2))} remaining
+              </div>
             </div>
             <div className={styles["stat-card"]}>
               <div className={styles["stat-label"]}>Current Stage</div>
@@ -305,16 +316,34 @@ const Dashboard = () => {
                 className={styles["stat-val"]}
                 style={{ fontSize: "16px", marginTop: "4px", color: "#7dd3f0" }}
               >
-                Getting Started
+                {progress.mypurpose
+                  ? "LifePlan"
+                  : progress.surrender
+                    ? "Surrender"
+                    : progress.perspective
+                      ? "Perspective"
+                      : progress.whereiam
+                        ? "Getting Started"
+                        : "Getting Started"}
               </div>
-              <div className={styles["stat-sub"]}>Stage 1 of 4</div>
+              <div className={styles["stat-sub"]}>
+                {progress.mypurpose
+                  ? "Stage 4 of 4"
+                  : progress.surrender
+                    ? "Stage 3 of 4"
+                    : progress.perspective
+                      ? "Stage 2 of 4"
+                      : "Stage 1 of 4"}
+              </div>
             </div>
             <div className={styles["stat-card"]}>
               <div className={styles["stat-label"]}>Stages Unlocked</div>
               <div className={styles["stat-val"]}>
-                1 <span>/ 4</span>
+                {Object.values(progress).filter(Boolean).length} <span>/ 4</span>
               </div>
-              <div className={styles["stat-sub"]}>3 stages locked ahead</div>
+              <div className={styles["stat-sub"]}>
+                {Math.max(0, 4 - Object.values(progress).filter(Boolean).length)} stages locked
+              </div>
             </div>
           </div>
 
@@ -391,21 +420,21 @@ const Dashboard = () => {
                   </Link>
                   <Link to="/introduction" style={{ textDecoration: "none" }}>
                     <div
-                      className={`${styles["mod-node"]} ${progress.perspective ? styles.completed : styles.active}`}
+                      className={`${styles["mod-node"]} ${progress.whereiam ? styles.completed : styles.active}`}
                     >
                       <div className={styles["mn-icon-row"]}>
                         <span className={styles["mn-icon"]}>
                           <i
                             className="fa fa-search"
                             style={{
-                              color: progress.perspective
+                              color: progress.whereiam
                                 ? "#27ae60"
                                 : "#3a8fb5",
                             }}
                           ></i>
                         </span>
                         <span
-                          className={`${styles["mn-badge"]} ${progress.perspective ? styles["mb-done"] : styles["mb-active"]}`}
+                          className={`${styles["mn-badge"]} ${progress.whereiam ? styles["mb-done"] : styles["mb-active"]}`}
                         >
                           <i
                             className={`fa ${progress.perspective ? "fa-check" : "fa-play"}`}

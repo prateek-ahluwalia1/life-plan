@@ -1,6 +1,6 @@
 import React from "react";
 
-const PageLoader: React.FC = () => {
+const Loader: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#161f1e]">
       <div className="relative flex items-center justify-center">
@@ -13,4 +13,4 @@ const PageLoader: React.FC = () => {
   );
 };
 
-export default PageLoader;
+export default Loader;

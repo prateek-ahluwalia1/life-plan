@@ -6,6 +6,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/slices/authSlice";
 import type { RootState } from "../store/store";
 import { apiURL, downloadModulePdfFromServer } from "../utils/exports";
+import useModuleAccess from "../hooks/useModuleAccess";
+import ModuleGatingBlock from "../components/ModuleGatingBlock";
+import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
 
 type AssessmentColumn = "right" | "wrong" | "confused" | "missing";
 type DomainKey = "personal" | "family" | "church" | "vocation" | "community";
@@ -193,6 +196,13 @@ const WhereIAmNow = () => {
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
   const token = useSelector((state: RootState) => state.auth.token);
+  
+  // Module access gating
+  const { isLocked } = useModuleAccess("where-i-am-now");
+  
+  // Module restart state
+  const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const profileInitials = (() => {
     const source = (userdata?.name || userdata?.email || "U").trim();
@@ -541,27 +551,42 @@ const WhereIAmNow = () => {
     );
   };
 
-  const handleUnlockPerspective = () => {
-    navigate("/perspective");
-
+  const handleUnlockPerspective = async () => {
     if (!token) {
+      navigate("/perspective");
       return;
     }
 
-    void fetch(`${apiURL}modules/life-plan-modules`, {
-      method: "PUT",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        progress: {
-          whereiam: true,
+    try {
+      // Save completion progress first
+      const response = await fetch(`${apiURL}modules/life-plan-modules`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      }),
-    });
+        credentials: "include",
+        body: JSON.stringify({
+          progress: {
+            whereiam: true,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        // Only navigate after the progress has been saved
+        navigate("/perspective");
+      } else {
+        console.error("Failed to save progress");
+        // Still navigate even if save failed
+        navigate("/perspective");
+      }
+    } catch (error) {
+      console.error("Error saving progress:", error);
+      // Still navigate even if save failed
+      navigate("/perspective");
+    }
   };
 
   const handleFollowupSubmit = () => {
@@ -661,11 +686,49 @@ const WhereIAmNow = () => {
     setLastUpdatedCell(null);
   };
 
+  // Module restart handlers
+  const handleRestart = async () => {
+    if (!token) return;
+
+    try {
+      const result = await requestModuleRestart(token, "modules/where-i-am-now");
+      if (result?.confirmationId) {
+        setRestartConfirmId(result.confirmationId);
+        setShowRestartConfirm(true);
+      }
+    } catch (err) {
+      console.error("Failed to initiate restart:", err);
+    }
+  };
+
+  const handleConfirmRestart = async () => {
+    if (!token || !restartConfirmId) return;
+
+    try {
+      await confirmModuleRestart(token, "modules/where-i-am-now", restartConfirmId);
+      setShowRestartConfirm(false);
+      setRestartConfirmId(null);
+      // Reset local state
+      handleResetTable();
+    } catch (err) {
+      console.error("Failed to confirm restart:", err);
+    }
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     setIsProfileMenuOpen(false);
     navigate("/");
   };
+
+  // Check module access
+  if (isLocked) {
+    return <ModuleGatingBlock 
+      moduleName="Where I Am Now" 
+      requiredModules={["getting-started"]} 
+      onRetry={() => window.location.reload()}
+    />;
+  }
 
   return (
     <div className={styles.container}>
@@ -806,6 +869,20 @@ const WhereIAmNow = () => {
         </Link>
 
         <div className={styles["sb-spacer"]}></div>
+
+        <button
+          onClick={handleRestart}
+          className={styles["sb-btn"]}
+          style={{ color: "#ff9800" }}
+        >
+          <svg className={styles.icon} viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+          <span className={styles["sb-tip"]}>Restart Module</span>
+        </button>
 
         <button
           onClick={handleLogout}
@@ -1155,6 +1232,67 @@ const WhereIAmNow = () => {
           </div>
         </div>
       </div>
+
+      {/* Restart Confirmation Dialog */}
+      {showRestartConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "400px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#d32f2f" }}>Confirm Module Restart</h3>
+            <p>
+              This will permanently delete all your answers and follow-up notes for this module.
+              <strong> This action cannot be undone.</strong>
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowRestartConfirm(false)}
+                style={{
+                  padding: "10px 20px",
+                  background: "#f5f5f5",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRestart}
+                style={{
+                  padding: "10px 20px",
+                  background: "#d32f2f",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
