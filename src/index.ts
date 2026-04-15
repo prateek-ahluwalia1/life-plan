@@ -6,15 +6,17 @@ import authRoutes from "./routes/auth.routes";
 import whereIAmNowRoutes from "./routes/whereIAmNow.routes";
 import lifePlanModulesRoutes from "./routes/lifePlanModules.routes";
 import chatRoutes from "./routes/chat.routes";
-
 const PORT = process.env.PORT;
 
 const app: Express = express();
+
+connectDB();
 
 const corsOptions = {
   origin: String(process.env.FRONTEND_URL) || [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://yourlifeplanjourney.com"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
   credentials: true,
@@ -33,7 +35,12 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/modules", whereIAmNowRoutes);
 app.use("/api/v1/modules", lifePlanModulesRoutes);
 app.use("/api/v1/chat", chatRoutes);
-connectDB();
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the Life Plan API. Backend working fine.");
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
