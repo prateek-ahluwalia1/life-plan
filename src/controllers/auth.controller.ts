@@ -19,6 +19,7 @@ import type {
 import { sendEmail } from "../services/send.mail";
 import otpTemplate from "../utils/emailTemplates/otp";
 import resetPasswordTemplate from "../utils/emailTemplates/resetPassword";
+import registrationNotificationTemplate from "../utils/emailTemplates/registrationNotification";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import { OAuth2Client } from "google-auth-library";
 
@@ -183,6 +184,21 @@ const verifyOtp = async (req: Request, res: Response) => {
     user.otpRequestedAt = null;
 
     await user.save();
+
+    // Send registration notification email to admin
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@lifeplan.com";
+    const registrationTime = new Date().toLocaleString();
+
+    try {
+      await sendEmail({
+        to: adminEmail,
+        subject: "LifePlan - New User Registration",
+        html: registrationNotificationTemplate(normalizedEmail, registrationTime),
+      });
+    } catch (emailError) {
+      console.error("Failed to send registration notification email:", emailError);
+      // Continue execution even if admin email fails
+    }
 
     res.status(200).json({ message: "OTP verified successfully" });
   } catch (error) {

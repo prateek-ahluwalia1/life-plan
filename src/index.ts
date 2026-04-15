@@ -5,6 +5,7 @@ import connectDB from "./config/connect.db";
 import authRoutes from "./routes/auth.routes";
 import whereIAmNowRoutes from "./routes/whereIAmNow.routes";
 import lifePlanModulesRoutes from "./routes/lifePlanModules.routes";
+import gettingStartedModulesRoutes from "./routes/gettingStartedModules.routes";
 import chatRoutes from "./routes/chat.routes";
 const PORT = process.env.PORT;
 
@@ -34,6 +35,7 @@ app.use(express.json());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/modules", whereIAmNowRoutes);
 app.use("/api/v1/modules", lifePlanModulesRoutes);
+app.use("/api/v1/modules", gettingStartedModulesRoutes);
 app.use("/api/v1/chat", chatRoutes);
 
 app.get("/", (req, res) => {

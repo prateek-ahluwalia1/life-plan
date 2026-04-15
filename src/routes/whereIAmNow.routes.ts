@@ -25,4 +25,14 @@ router.get(
   whereIAmNowController.downloadWhereIAmNowPdf,
 );
 
+// Public endpoints for examples and metadata
+router.get(
+  "/where-i-am-now/examples",
+  whereIAmNowController.getExamples,
+);
+router.get(
+  "/where-i-am-now/metadata",
+  whereIAmNowController.getMetadata,
+);
+
 export default router;
