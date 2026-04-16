@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import styles from "../css/WhereAmI.module.css";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -170,6 +170,129 @@ const createEmptyTableData = (): TableData => ({
   community: { right: "", wrong: "", confused: "", missing: "" },
 });
 
+// Memoized table component to prevent re-renders during input typing
+const ProgressTable = ({ 
+  styles, 
+  tableData, 
+  followupTableData, 
+  lastUpdatedCell, 
+  handleEditQuestion,
+  domains,
+  questionFlow 
+}: {
+  styles: any;
+  tableData: TableData;
+  followupTableData: TableData;
+  lastUpdatedCell: { domain: DomainKey; column: AssessmentColumn } | null;
+  handleEditQuestion: (domain: DomainKey, column: AssessmentColumn) => void;
+  domains: Array<{ key: DomainKey; config: DomainEntry }>;
+  questionFlow: QuestionStep[];
+}) => {
+  return (
+    <div className={styles["live-table"]}>
+      <table className={styles["live-table-table"]}>
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>What&apos;s Right?</th>
+            <th>What&apos;s Wrong?</th>
+            <th>What&apos;s Confused?</th>
+            <th>What&apos;s Missing?</th>
+          </tr>
+        </thead>
+        <tbody>
+          {domains.map((domain) => {
+            const values = tableData[domain.key];
+            return (
+              <tr key={domain.key}>
+                <td>
+                  <strong>{domain.config.title}</strong>
+                </td>
+                {questionFlow.map((question) => {
+                  const isHighlighted =
+                    lastUpdatedCell?.domain === domain.key &&
+                    lastUpdatedCell.column === question.column;
+                  const mainAnswer = values[question.column];
+                  const followupAnswer =
+                    followupTableData[domain.key][question.column];
+                  const hasAnyAnswer = Boolean(
+                    mainAnswer || followupAnswer,
+                  );
+                  return (
+                    <td
+                      key={`${domain.key}-${question.column}`}
+                      className={
+                        isHighlighted ? styles["cell-updated"] : ""
+                      }
+                    >
+                      <div className={styles["table-cell-content"]}>
+                        <div
+                          className={styles["table-answer-preview"]}
+                          title={mainAnswer || "No answer yet"}
+                        >
+                          {mainAnswer || "—"}
+                        </div>
+
+                        {followupAnswer && (
+                          <span
+                            className={styles["table-followup-pill"]}
+                            title={`Follow-up: ${followupAnswer}`}
+                          >
+                            {followupAnswer}
+                          </span>
+                        )}
+
+                        {hasAnyAnswer && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEditQuestion(
+                                domain.key,
+                                question.column,
+                              )
+                            }
+                            className={styles["table-edit-btn"]}
+                            title="Edit this response"
+                            aria-label="Edit this response"
+                          >
+                            <svg
+                              className={styles["table-edit-icon"]}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 20h9"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const MemoizedProgressTable = memo(ProgressTable);
+
 const getNextUnansweredStep = (data: TableData) => {
   for (let d = 0; d < domains.length; d += 1) {
     for (let q = 0; q < questionFlow.length; q += 1) {
@@ -249,16 +372,19 @@ const WhereIAmNow = () => {
   const totalQuestions = domains.length * questionFlow.length;
 
   const answeredCount = useMemo(() => {
-    return Object.values(tableData).reduce((total, domainData) => {
-      return (
-        total +
-        Object.values(domainData).filter((value) => value.trim().length > 0)
-          .length
-      );
-    }, 0);
+    let count = 0;
+    for (const domainData of Object.values(tableData)) {
+      for (const value of Object.values(domainData)) {
+        if (value.trim().length > 0) count++;
+      }
+    }
+    return count;
   }, [tableData]);
 
-  const moduleProgress = Math.round((answeredCount / totalQuestions) * 100);
+  const moduleProgress = useMemo(
+    () => Math.round((answeredCount / totalQuestions) * 100),
+    [answeredCount, totalQuestions]
+  );
 
   const applyRestoredData = (restored: {
     tableData: TableData;
@@ -1111,105 +1237,15 @@ const WhereIAmNow = () => {
                 </div>
               </div>
 
-              <div className={styles["live-table"]}>
-                <table className={styles["live-table-table"]}>
-                  <thead>
-                    <tr>
-                      <th>Domain</th>
-                      <th>What&apos;s Right?</th>
-                      <th>What&apos;s Wrong?</th>
-                      <th>What&apos;s Confused?</th>
-                      <th>What&apos;s Missing?</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {domains.map((domain) => {
-                      const values = tableData[domain.key];
-                      return (
-                        <tr key={domain.key}>
-                          <td>
-                            <strong>{domain.config.title}</strong>
-                          </td>
-                          {questionFlow.map((question) => {
-                            const isHighlighted =
-                              lastUpdatedCell?.domain === domain.key &&
-                              lastUpdatedCell.column === question.column;
-                            const mainAnswer = values[question.column];
-                            const followupAnswer =
-                              followupTableData[domain.key][question.column];
-                            const hasAnyAnswer = Boolean(
-                              mainAnswer || followupAnswer,
-                            );
-                            return (
-                              <td
-                                key={`${domain.key}-${question.column}`}
-                                className={
-                                  isHighlighted ? styles["cell-updated"] : ""
-                                }
-                              >
-                                <div className={styles["table-cell-content"]}>
-                                  <div
-                                    className={styles["table-answer-preview"]}
-                                    title={mainAnswer || "No answer yet"}
-                                  >
-                                    {mainAnswer || "—"}
-                                  </div>
-
-                                  {followupAnswer && (
-                                    <span
-                                      className={styles["table-followup-pill"]}
-                                      title={`Follow-up: ${followupAnswer}`}
-                                    >
-                                      {followupAnswer}
-                                    </span>
-                                  )}
-
-                                  {hasAnyAnswer && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleEditQuestion(
-                                          domain.key,
-                                          question.column,
-                                        )
-                                      }
-                                      className={styles["table-edit-btn"]}
-                                      title="Edit this response"
-                                      aria-label="Edit this response"
-                                    >
-                                      <svg
-                                        className={styles["table-edit-icon"]}
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        aria-hidden="true"
-                                      >
-                                        <path
-                                          d="M12 20h9"
-                                          stroke="currentColor"
-                                          strokeWidth="1.8"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                        <path
-                                          d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"
-                                          stroke="currentColor"
-                                          strokeWidth="1.8"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <MemoizedProgressTable
+                styles={styles}
+                tableData={tableData}
+                followupTableData={followupTableData}
+                lastUpdatedCell={lastUpdatedCell}
+                handleEditQuestion={handleEditQuestion}
+                domains={domains}
+                questionFlow={questionFlow}
+              />
             </section>
 
             {isTableComplete && (
