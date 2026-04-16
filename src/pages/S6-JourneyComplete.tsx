@@ -21,6 +21,7 @@ type LifePlanProgress = {
 const JourneyComplete = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [deliverables, setDeliverables] = useState({
     missionStatement: "",
     visionStatement: "",
@@ -145,6 +146,14 @@ const JourneyComplete = () => {
     };
   }, []);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      timeoutIdsRef.current = [];
+    };
+  }, []);
+
   const handleLogout = () => {
     dispatch(logout());
     setIsProfileMenuOpen(false);
@@ -171,8 +180,10 @@ const JourneyComplete = () => {
     }
 
     downloadDeliverablePdf("mission");
-    setTimeout(() => downloadDeliverablePdf("vision"), 250);
-    setTimeout(() => downloadDeliverablePdf("action"), 500);
+    const timeout1 = setTimeout(() => downloadDeliverablePdf("vision"), 250);
+    const timeout2 = setTimeout(() => downloadDeliverablePdf("action"), 500);
+    
+    timeoutIdsRef.current.push(timeout1, timeout2);
   };
 
   const saveDeliverableField = async (
@@ -197,12 +208,14 @@ const JourneyComplete = () => {
     setDeliverables((prev) => ({ ...prev, [key]: cleaned }));
     setSaveStateByKey((prev) => ({ ...prev, [key]: "Saved" }));
 
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setSaveStateByKey((prev) => ({
         ...prev,
         [key]: prev[key] === "Saved" ? "" : prev[key],
       }));
     }, 1800);
+    
+    timeoutIdsRef.current.push(timeoutId);
   };
 
   return (

@@ -108,7 +108,7 @@ const SurrenderStage = () => {
       return;
     }
 
-    void fetch(`${apiURL}modules/life-plan-modules`, {
+    fetch(`${apiURL}modules/life-plan-modules`, {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -117,6 +117,8 @@ const SurrenderStage = () => {
       },
       credentials: "include",
       body: JSON.stringify({ surrenderItems: items }),
+    }).catch((err) => {
+      console.error("Failed to save surrender items:", err);
     });
   }, [items, token]);
 
@@ -175,7 +177,7 @@ const SurrenderStage = () => {
       return;
     }
 
-    void fetch(`${apiURL}modules/life-plan-modules`, {
+    fetch(`${apiURL}modules/life-plan-modules`, {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -189,6 +191,8 @@ const SurrenderStage = () => {
         },
         surrenderItems: items,
       }),
+    }).catch((err) => {
+      console.error("Failed to unlock surrender module:", err);
     });
   };
 

@@ -240,6 +240,7 @@ const WhereIAmNow = () => {
   const [isRemoteSyncReady, setIsRemoteSyncReady] = useState(false);
 
   const persistTimeoutRef = useRef<number | null>(null);
+  const pendingSaveRef = useRef(false);
 
   const [analysis, setAnalysis] = useState("");
 
@@ -418,23 +419,39 @@ const WhereIAmNow = () => {
       window.clearTimeout(persistTimeoutRef.current);
     }
 
-    persistTimeoutRef.current = window.setTimeout(() => {
-      void fetch(`${apiURL}modules/where-i-am-now`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          tableData,
-          followupTableData,
-          analysis,
-          flow,
-          moduleProgress,
-        }),
-      });
+    persistTimeoutRef.current = window.setTimeout(async () => {
+      if (pendingSaveRef.current) {
+        // Skip if a save is already in progress
+        return;
+      }
+
+      pendingSaveRef.current = true;
+      try {
+        const response = await fetch(`${apiURL}modules/where-i-am-now`, {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            tableData,
+            followupTableData,
+            analysis,
+            flow,
+            moduleProgress,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Auto-save failed:", response.statusText);
+        }
+      } catch (err) {
+        console.error("Network error during auto-save:", err);
+      } finally {
+        pendingSaveRef.current = false;
+      }
     }, 500);
   }, [
     tableData,
@@ -661,13 +678,15 @@ const WhereIAmNow = () => {
     }
 
     if (token) {
-      void fetch(`${apiURL}modules/where-i-am-now`, {
+      fetch(`${apiURL}modules/where-i-am-now`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
+      }).catch((err) => {
+        console.error("Failed to delete module data:", err);
       });
     }
 

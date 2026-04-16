@@ -114,7 +114,7 @@ const MyPurpose = () => {
       return;
     }
 
-    void fetch(`${apiURL}modules/life-plan-modules`, {
+    fetch(`${apiURL}modules/life-plan-modules`, {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -127,19 +127,28 @@ const MyPurpose = () => {
           mypurpose: true,
         },
       }),
+    }).catch((err) => {
+      console.error("Failed to unlock MyPurpose module:", err);
     });
   };
 
-  const persistMissionStatement = () => {
+  const persistMissionStatement = async () => {
     const cleaned = missionText.trim();
 
     if (!token) {
       return;
     }
 
-    void saveLifePlanDeliverablesToServer(token, {
-      missionStatement: cleaned,
-    });
+    try {
+      const ok = await saveLifePlanDeliverablesToServer(token, {
+        missionStatement: cleaned,
+      });
+      if (!ok) {
+        console.error("Failed to save mission statement");
+      }
+    } catch (err) {
+      console.error("Error saving mission statement:", err);
+    }
   };
 
   const handleCompleteModule = () => {

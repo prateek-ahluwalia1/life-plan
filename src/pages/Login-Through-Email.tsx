@@ -24,7 +24,13 @@ const Login: React.FC = () => {
     credentialResponse: CredentialResponse,
   ) => {
     console.log("Google login successful:", credentialResponse);
-    const token: any = credentialResponse.credential;
+    const token = credentialResponse.credential;
+    
+    if (!token) {
+      console.error("No credential in response");
+      return;
+    }
+    
     const response = await submit("auth/google-login", { tokenId: token });
     if (!response) return;
 
