@@ -73,13 +73,6 @@ const Login: React.FC = () => {
               text="continue_with"
             />
           )}
-          {/* <button className={styles.btnGoogle} type="button">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
-              alt="Google"
-            />
-            Continue with Google
-          </button> */}
         </div>
 
         <div>
