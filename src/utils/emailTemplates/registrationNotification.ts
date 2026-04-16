@@ -1,7 +1,14 @@
 const registrationNotificationTemplate = (
   userEmail: string,
   registrationTime: string,
+  registrationMethod: string = "Email",
+  moduleStatus?: string,
 ): string => {
+  const moduleStatusSection =
+    moduleStatus && moduleStatus !== "No modules started"
+      ? `<strong>Module Status:</strong> ${moduleStatus}<br>`
+      : "<strong>Module Status:</strong> No modules started<br>";
+
   return `
 <!DOCTYPE html>
 <html>
@@ -19,7 +26,7 @@ const registrationNotificationTemplate = (
       max-width: 600px;
     }
     .header {
-      background-color: #0916308;
+      background-color: #091630;
       color: white;
       padding: 20px;
       border-radius: 8px 8px 0 0;
@@ -54,10 +61,12 @@ const registrationNotificationTemplate = (
       
       <div class="details">
         <strong>User Email:</strong> ${userEmail}<br>
-        <strong>Registration Time:</strong> ${registrationTime}
+        <strong>Registration Time:</strong> ${registrationTime}<br>
+        <strong>Registration Method:</strong> ${registrationMethod}<br>
+        ${moduleStatusSection}
       </div>
 
-      <p>This is an automated notification. The user has completed email verification.</p>
+      <p>This is an automated notification. The user has completed registration and email verification.</p>
     </div>
     <div class="footer">
       <p>LifePlan © 2026 | Automated Notification</p>

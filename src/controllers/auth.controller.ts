@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import User from "../models/user.model";
+import GettingStartedModules from "../models/gettingStartedModules.model";
 import {
   hashPassword,
   comparePassword,
@@ -36,6 +37,56 @@ const buildUserData = (id: string, email: string) => ({
   name: email.split("@")[0],
   email,
 });
+
+const sendAdminRegistrationNotification = async (
+  userEmail: string,
+  userId: string,
+  registrationMethod: string = "Email",
+) => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@lifeplan.com";
+    const registrationTime = new Date().toLocaleString();
+
+    // Try to get module status if available
+    let moduleStatus = "No modules started";
+    try {
+      const gettingStartedModule = await GettingStartedModules.findOne({
+        userId,
+      });
+      if (gettingStartedModule) {
+        const progress = gettingStartedModule.progress || {};
+        const completedModules = Object.entries(progress)
+          .filter(([_, value]) => value === true)
+          .map(([key]) => key)
+          .join(", ");
+
+        if (completedModules.length > 0) {
+          moduleStatus = `${completedModules} (completed)`;
+        } else {
+          moduleStatus = "Module created but not started";
+        }
+      }
+    } catch (moduleError) {
+      console.error("Error fetching module status:", moduleError);
+      // Continue with default moduleStatus if there's an error
+    }
+
+    await sendEmail({
+      to: adminEmail,
+      subject: "LifePlan - New User Registration",
+      html: registrationNotificationTemplate(
+        userEmail,
+        registrationTime,
+        registrationMethod,
+        moduleStatus,
+      ),
+    });
+  } catch (emailError) {
+    console.error("Failed to send registration notification email:", emailError);
+    // Continue execution even if admin email fails
+  }
+};
+
 
 const register = async (req: Request, res: Response) => {
   try {
@@ -186,19 +237,11 @@ const verifyOtp = async (req: Request, res: Response) => {
     await user.save();
 
     // Send registration notification email to admin
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@lifeplan.com";
-    const registrationTime = new Date().toLocaleString();
-
-    try {
-      await sendEmail({
-        to: adminEmail,
-        subject: "LifePlan - New User Registration",
-        html: registrationNotificationTemplate(normalizedEmail, registrationTime),
-      });
-    } catch (emailError) {
-      console.error("Failed to send registration notification email:", emailError);
-      // Continue execution even if admin email fails
-    }
+    await sendAdminRegistrationNotification(
+      normalizedEmail,
+      String(user._id),
+      "Email Verification",
+    );
 
     res.status(200).json({ message: "OTP verified successfully" });
   } catch (error) {
@@ -397,14 +440,23 @@ const googleLogin = async (req: Request, res: Response) => {
 
     const normalizedEmail = sanitizeEmail(payload.email);
     let user = await User.findOne({ email: normalizedEmail });
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       user = new User({
         email: normalizedEmail,
         isVerified: true,
         googleId: payload.sub,
       });
       await user.save();
+
+      // Send registration notification email to admin for new Google user
+      await sendAdminRegistrationNotification(
+        normalizedEmail,
+        String(user._id),
+        "Google Login",
+      );
     }
 
     const token = createJwtToken({
