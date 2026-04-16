@@ -8,7 +8,6 @@ import {
 
 const perspectiveRoutes = Router();
 
-// Module 3 - How I Got Here
 perspectiveRoutes.get("/perspective/module-3", authMiddleware, getModule3Data);
 perspectiveRoutes.put("/perspective/module-3", authMiddleware, saveModule3Data);
 perspectiveRoutes.delete("/perspective/module-3", authMiddleware, deleteModule3Data);

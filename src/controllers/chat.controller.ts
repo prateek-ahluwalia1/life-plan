@@ -14,10 +14,8 @@ const conversationHistories: Map<string, ConversationMessage[]> = new Map();
 
 const initateThread = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Generate a unique conversation ID
     const conversationId = crypto.randomUUID();
 
-    // Initialize empty conversation history
     conversationHistories.set(conversationId, []);
 
     return res.status(200).json({ conversationId });
@@ -37,7 +35,6 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Validate conversation exists
     if (!conversationHistories.has(activeConversationId)) {
       return res.status(404).json({
         error: "Conversation not found. Please initiate a new conversation.",
