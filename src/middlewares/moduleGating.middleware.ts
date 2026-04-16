@@ -64,21 +64,31 @@ export const moduleGatingMiddleware =
 
           // Check if module is complete based on its structure
           if (prereqModule === "getting-started") {
-            const gettingStarted = doc as any;
-            return (
-              gettingStarted.progress?.overallGoalComplete &&
-              gettingStarted.progress?.personalDomainComplete &&
-              gettingStarted.progress?.familyDomainComplete &&
-              gettingStarted.progress?.churchDomainComplete &&
-              gettingStarted.progress?.vocationDomainComplete &&
-              gettingStarted.progress?.communityDomainComplete
+            const progressObj = (doc as Record<string, unknown>).progress as Record<string, unknown> | undefined;
+            return !!(
+              progressObj &&
+              typeof progressObj === "object" &&
+              progressObj.overallGoalComplete === true &&
+              progressObj.personalDomainComplete === true &&
+              progressObj.familyDomainComplete === true &&
+              progressObj.churchDomainComplete === true &&
+              progressObj.vocationDomainComplete === true &&
+              progressObj.communityDomainComplete === true
             );
           } else if (prereqModule === "whereiam") {
-            const whereIAmNow = doc as any;
-            return whereIAmNow.flow?.isComplete === true;
+            const flowObj = (doc as Record<string, unknown>).flow as Record<string, unknown> | undefined;
+            return !!(
+              flowObj &&
+              typeof flowObj === "object" &&
+              flowObj.isComplete === true
+            );
           } else if (prereqModule === "life-plan") {
-            const lifePlan = doc as any;
-            return lifePlan.progress?.whereiam === true;
+            const progressObj = (doc as Record<string, unknown>).progress as Record<string, unknown> | undefined;
+            return !!(
+              progressObj &&
+              typeof progressObj === "object" &&
+              progressObj.whereiam === true
+            );
           }
 
           return false;
@@ -133,7 +143,7 @@ export const checkModuleAccess = async (
         continue;
       }
 
-      let isComplete = false;
+      let isComplete: boolean = false;
 
       if (prereqModule === "perspective") {
         // Check LifePlanModules for perspective progress
@@ -143,26 +153,37 @@ export const checkModuleAccess = async (
         // Check LifePlanModules for surrender progress
         const lifePlanDoc = await LifePlanModules.findOne({ userId }).lean();
         isComplete = lifePlanDoc?.progress?.surrender === true;
-      } else {
+      } else if (Model) {
         const doc = await (Model as any).findOne({ userId }).lean();
 
         if (!doc) {
           isComplete = false;
         } else if (prereqModule === "getting-started") {
-          const gettingStarted = doc as any;
-          isComplete =
-            gettingStarted.progress?.overallGoalComplete &&
-            gettingStarted.progress?.personalDomainComplete &&
-            gettingStarted.progress?.familyDomainComplete &&
-            gettingStarted.progress?.churchDomainComplete &&
-            gettingStarted.progress?.vocationDomainComplete &&
-            gettingStarted.progress?.communityDomainComplete;
+          const progressObj = (doc as Record<string, unknown>).progress as Record<string, unknown> | undefined;
+          isComplete = !!(
+            progressObj &&
+            typeof progressObj === "object" &&
+            progressObj.overallGoalComplete === true &&
+            progressObj.personalDomainComplete === true &&
+            progressObj.familyDomainComplete === true &&
+            progressObj.churchDomainComplete === true &&
+            progressObj.vocationDomainComplete === true &&
+            progressObj.communityDomainComplete === true
+          );
         } else if (prereqModule === "whereiam") {
-          const whereIAmNow = doc as any;
-          isComplete = whereIAmNow.flow?.isComplete === true;
+          const flowObj = (doc as Record<string, unknown>).flow as Record<string, unknown> | undefined;
+          isComplete = !!(
+            flowObj &&
+            typeof flowObj === "object" &&
+            flowObj.isComplete === true
+          );
         } else if (prereqModule === "life-plan") {
-          const lifePlan = doc as any;
-          isComplete = lifePlan.progress?.whereiam === true;
+          const progressObj = (doc as Record<string, unknown>).progress as Record<string, unknown> | undefined;
+          isComplete = !!(
+            progressObj &&
+            typeof progressObj === "object" &&
+            progressObj.whereiam === true
+          );
         }
       }
 

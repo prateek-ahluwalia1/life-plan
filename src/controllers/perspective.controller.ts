@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import LifePlanModules from "../models/lifePlanModules.model";
 
 // GET /api/v1/modules/perspective/module-3
-export const getModule3Data = async (req: Request, res: Response) => {
+export const getModule3Data = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -38,9 +39,9 @@ export const getModule3Data = async (req: Request, res: Response) => {
 };
 
 // PUT /api/v1/modules/perspective/module-3
-export const saveModule3Data = async (req: Request, res: Response) => {
+export const saveModule3Data = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -77,9 +78,9 @@ export const saveModule3Data = async (req: Request, res: Response) => {
 };
 
 // DELETE /api/v1/modules/perspective/module-3
-export const deleteModule3Data = async (req: Request, res: Response) => {
+export const deleteModule3Data = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }

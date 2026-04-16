@@ -1,22 +1,24 @@
 import { openai } from "../config/openai";
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import crypto from "crypto";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
-
-interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-// In-memory store for conversation histories (replace with database for production)
-// Key: conversationId, Value: array of messages
-const conversationHistories: Map<string, ConversationMessage[]> = new Map();
+import ChatConversation from "../models/chatConversation.model";
 
 const initateThread = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const conversationId = crypto.randomUUID();
 
-    conversationHistories.set(conversationId, []);
+    // Create new conversation in database
+    await ChatConversation.create({
+      userId,
+      conversationId,
+      messages: [],
+    });
 
     return res.status(200).json({ conversationId });
   } catch (error) {
@@ -27,6 +29,11 @@ const initateThread = async (req: AuthenticatedRequest, res: Response) => {
 
 const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { activeConversationId, message, systemPrompt } = req.body || {};
 
     if (!activeConversationId || !message) {
@@ -35,16 +42,20 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    if (!conversationHistories.has(activeConversationId)) {
+    // Fetch conversation from database
+    const conversation = await ChatConversation.findOne({
+      conversationId: activeConversationId,
+      userId,
+    });
+
+    if (!conversation) {
       return res.status(404).json({
         error: "Conversation not found. Please initiate a new conversation.",
       });
     }
 
-    const history = conversationHistories.get(activeConversationId) || [];
-
     // Build messages array for API call
-    const messages: ConversationMessage[] = [];
+    const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
 
     // Add system prompt if provided
     if (systemPrompt) {
@@ -55,11 +66,16 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     // Add conversation history
-    messages.push(...history);
+    messages.push(
+      ...conversation.messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+    );
 
     // Add current user message
-    const userMessage: ConversationMessage = {
-      role: "user",
+    const userMessage = {
+      role: "user" as const,
       content: String(message),
     };
     messages.push(userMessage);
@@ -67,10 +83,7 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
     // Call ChatGPT API
     const response = await openai.chat.completions.create({
       model: "gpt-4",
-      messages: messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
+      messages,
       temperature: 0.7,
       max_tokens: 2000,
     });
@@ -85,13 +98,13 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
     const assistantMessage =
       choice?.message?.content || "No response text returned";
 
-    // Store messages in conversation history
-    history.push(userMessage);
-    history.push({
+    // Save messages to database
+    conversation.messages.push(userMessage);
+    conversation.messages.push({
       role: "assistant",
       content: assistantMessage,
     });
-    conversationHistories.set(activeConversationId, history);
+    await conversation.save();
 
     return res.json({
       reply: assistantMessage,
@@ -101,7 +114,6 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
     console.error("Send message error:", error);
     return res.status(500).json({
       error: "Failed to send message",
-      details: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
