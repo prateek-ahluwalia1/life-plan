@@ -1,0 +1,553 @@
+/* ====================== IMPORTS FROM Perspective.module.css ====================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --gs: #3a8fb5;
+  --gs-d: #2a6f8f;
+  --p: #7c4ba0;
+  --p-d: #5e3678;
+  --s: #b8892a;
+  --s-d: #8a6415;
+  --lp: #c0392b;
+  --lp-d: #962d22;
+  --done: #27ae60;
+  --done-d: #1e8449;
+  --white: #ffffff;
+  --cream: rgba(255, 255, 255, 0.95);
+  --glass: rgba(255, 255, 255, 0.12);
+  --glass-b: rgba(255, 255, 255, 0.22);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --emerald: #10b981;
+  --bg: #080c08;
+  --sage: #3a8fb5;
+  --purple: #8b5cf6;
+  --sage-light: #5ab0d4;
+  --text: #f0f4f0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background: #1a1520;
+  overflow-x: hidden;
+}
+
+@keyframes bgMotion {
+  0% {
+    transform: scale(1.0);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1.0);
+  }
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(20, 10, 30, 0.8) 0%, rgba(10, 5, 15, 0.95) 100%),
+    url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&q=80') center/cover no-repeat;
+  animation: bgMotion 45s ease-in-out infinite;
+}
+
+.container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+/* ====================== NAVIGATION BAR STYLES ====================== */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15, 10, 25, 0.78);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 36px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.nav-wordmark {
+  font-size: 18px;
+  font-weight: 700;
+  color: #a7deff;
+  letter-spacing: -0.5px;
+}
+
+.nav-wordmark em {
+  font-style: normal;
+  color: #ffd48d;
+  font-weight: 500;
+}
+
+.nav-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.nav-center-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage-light);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gs), var(--p));
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.nav-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* ====================== SIDEBAR STYLES ====================== */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 62px;
+  width: 70px;
+  height: calc(100vh - 62px);
+  background: rgba(15, 10, 25, 0.3);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 8px;
+}
+
+.sb-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.sb-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sb-btn.active {
+  background: rgba(58, 143, 181, 0.15);
+  border-color: var(--sage);
+  color: var(--sage);
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.sb-tip {
+  position: absolute;
+  left: 60px;
+  background: rgba(15, 10, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sb-btn:hover .sb-tip {
+  opacity: 1;
+}
+
+.sb-spacer {
+  flex: 1;
+}
+
+/* ====================== MAIN LAYOUT ====================== */
+.layout {
+  display: flex;
+  flex: 1;
+  margin-left: 70px;
+  margin-top: 62px;
+  position: relative;
+  z-index: 1;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 30px;
+  min-height: calc(100vh - 200px);
+}
+
+/* ====================== GLASSMORPHISM CARD STYLES ====================== */
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  width: 100%;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.card-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.textarea-wrapper {
+  margin-bottom: 20px;
+}
+
+.card textarea {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.2s ease;
+}
+
+.card textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(58, 143, 181, 0.1);
+}
+
+.card textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ====================== BUTTON STYLES ====================== */
+.btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gs), var(--gs-d));
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(58, 143, 181, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ====================== DOMAIN GRID STYLES ====================== */
+.domain-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.domain-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid var(--sage);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.domain-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.domain-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 8px;
+}
+
+.domain-examples {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.domain-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+  display: grid;
+  gap: 4px;
+}
+
+.domain-card li {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  padding-left: 16px;
+  position: relative;
+}
+
+.domain-card li:before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: var(--sage);
+}
+
+.domain-card textarea {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 90px;
+  transition: all 0.2s ease;
+}
+
+.domain-card textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ====================== REVIEW SECTION STYLES ====================== */
+.review-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.review-item h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.review-content {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.review-content em {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+}
+
+/* ====================== SCREEN BADGE ====================== */
+.screen-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 50;
+}
+
+/* ====================== ERROR MESSAGE ====================== */
+.error-message {
+  background: rgba(192, 57, 43, 0.15);
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  color: rgba(255, 100, 100, 0.9);
+  font-size: 14px;
+}
+
+/* ====================== RESPONSIVE ====================== */
+@media (max-width: 768px) {
+  nav {
+    padding: 0 20px;
+    height: 56px;
+  }
+
+  .nav-wordmark {
+    font-size: 14px;
+  }
+
+  .nav-center {
+    display: none;
+  }
+
+  .layout {
+    margin-left: 60px;
+    margin-top: 56px;
+  }
+
+  .sidebar {
+    top: 56px;
+    height: calc(100vh - 56px);
+    width: 60px;
+  }
+
+  .sb-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .content {
+    padding: 24px 16px;
+  }
+
+  .card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .card h2 {
+    font-size: 22px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .screen-badge {
+    bottom: 12px;
+    right: 12px;
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+}
