@@ -19,7 +19,7 @@ const corsOptions = {
   origin: String(process.env.FRONTEND_URL) || [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://yourlifeplanjourney.com"
+    "https://yourlifeplanjourney.com"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
   credentials: true,
