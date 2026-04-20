@@ -7,6 +7,7 @@ import { apiURL } from "../utils/exports";
 import Loader from "../components/Loader";
 import styles from "../css/GettingStarted.module.css";
 import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
+import { useGettingStartedQuestions } from "../hooks/useAIQuestions";
 
 interface GettingStartedData {
   progress: {
@@ -32,7 +33,7 @@ interface DomainGoal {
   examples: string[];
 }
 
-const domainGoals: DomainGoal[] = [
+const fallbackDomainGoals: DomainGoal[] = [
   {
     key: "goalPersonal",
     label: "Personal Domain",
@@ -109,6 +110,165 @@ const GettingStarted: React.FC = () => {
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
+  // Get AI questions (with fallback to hardcoded)
+  console.log("[GettingStarted] Token available:", token ? "yes" : "no");
+  const { questions: aiQuestionsRaw, loading: aiLoading, error: aiError } = useGettingStartedQuestions(token);
+  console.log("[GettingStarted] AI questions state - loading:", aiLoading, "questions:", aiQuestionsRaw);
+
+  // Transform AI questions to domainGoals format
+  const transformAIQuestions = (aiQuestions: any): DomainGoal[] | null => {
+    console.log("[GettingStarted] Attempting transform with:", {
+      type: typeof aiQuestions,
+      isArray: Array.isArray(aiQuestions),
+      isObject: typeof aiQuestions === 'object',
+      length: aiQuestions?.length,
+      sample: Array.isArray(aiQuestions) ? aiQuestions[0] : null,
+    });
+
+    // Handle ARRAY format from API (array of questions with domain field)
+    if (Array.isArray(aiQuestions) && aiQuestions.length > 0) {
+      console.log("[GettingStarted] Processing array format questions");
+      
+      // Group questions by domain
+      const questionsByDomain: Record<string, any[]> = {};
+      aiQuestions.forEach((q: any) => {
+        const domainKey = q.domain?.toLowerCase() || "unknown";
+        if (!questionsByDomain[domainKey]) {
+          questionsByDomain[domainKey] = [];
+        }
+        questionsByDomain[domainKey].push(q);
+      });
+
+      console.log("[GettingStarted] Grouped by domain:", Object.keys(questionsByDomain));
+
+      // Map domain names to data field keys
+      const keyMap: Record<string, string> = {
+        personal: "goalPersonal",
+        family: "goalFamilyFriends",
+        church: "goalChurchKingdom",
+        vocation: "goalVocation",
+        community: "goalCommunity",
+        overall: "overallGoal",
+      };
+
+      const labelMap: Record<string, string> = {
+        personal: "Personal Domain",
+        family: "Family & Friends Domain",
+        church: "Church & Kingdom Domain",
+        vocation: "Vocation Domain",
+        community: "Community Domain",
+        overall: "Overall Goal",
+      };
+
+      const fieldMap: Record<string, string> = {
+        personal: "personalDomainComplete",
+        family: "familyDomainComplete",
+        church: "churchDomainComplete",
+        vocation: "vocationDomainComplete",
+        community: "communityDomainComplete",
+        overall: "overallGoalComplete",
+      };
+
+      const result = Object.entries(questionsByDomain).map(([domainKey, questions]: [string, any[]]) => {
+        const examples = questions.slice(0, 4).map((q: any) => q.question || q.prompt || "");
+        
+        return {
+          key: keyMap[domainKey] as any,
+          label: labelMap[domainKey] || domainKey,
+          field: fieldMap[domainKey] as any,
+          examples: examples.filter(Boolean),
+        };
+      });
+
+      console.log("[GettingStarted] Successfully transformed array to domains:", result.map(d => ({
+        key: d.key,
+        label: d.label,
+        examplesCount: d.examples.length,
+        firstExample: d.examples[0],
+      })));
+
+      return result;
+    }
+
+    // Handle OBJECT format from API (organized by domain)
+    if (aiQuestions && typeof aiQuestions === 'object' && !Array.isArray(aiQuestions)) {
+      console.log("[GettingStarted] Processing object format questions");
+      
+      const domains = Object.entries(aiQuestions) as [string, any][];
+      
+      const keyMap: Record<string, string> = {
+        personal: "goalPersonal",
+        family: "goalFamilyFriends",
+        church: "goalChurchKingdom",
+        vocation: "goalVocation",
+        community: "goalCommunity",
+        overall: "overallGoal",
+      };
+
+      const labelMap: Record<string, string> = {
+        personal: "Personal Domain",
+        family: "Family & Friends Domain",
+        church: "Church & Kingdom Domain",
+        vocation: "Vocation Domain",
+        community: "Community Domain",
+        overall: "Overall Goal",
+      };
+
+      const fieldMap: Record<string, string> = {
+        personal: "personalDomainComplete",
+        family: "familyDomainComplete",
+        church: "churchDomainComplete",
+        vocation: "vocationDomainComplete",
+        community: "communityDomainComplete",
+        overall: "overallGoalComplete",
+      };
+
+      const result = domains.map(([domainKey, domainQuestions]: [string, any]) => {
+        const examples = (domainQuestions[0]?.examples || []).slice(0, 4);
+        
+        return {
+          key: keyMap[domainKey] as any,
+          label: labelMap[domainKey] || domainKey,
+          field: fieldMap[domainKey] as any,
+          examples: examples,
+        };
+      });
+      
+      console.log("[GettingStarted] Successfully transformed object to domains:", result.map(d => ({
+        key: d.key,
+        label: d.label,
+        examplesCount: d.examples.length,
+        firstExample: d.examples[0],
+      })));
+      
+      return result;
+    }
+
+    console.log("[GettingStarted] Transform failed - unexpected format:", {
+      isObject: typeof aiQuestions === 'object',
+      isArray: Array.isArray(aiQuestions),
+      isEmpty: !aiQuestions || (Array.isArray(aiQuestions) && aiQuestions.length === 0),
+    });
+    return null; // Return null if format doesn't match, so we know it's fallback
+  };
+
+  const transformedAIQuestions = aiQuestionsRaw ? transformAIQuestions(aiQuestionsRaw) : null;
+  const domainGoals = transformedAIQuestions || fallbackDomainGoals;
+  
+  // For the domains step, exclude "overallGoal" since it's handled in the overall step
+  const domainGoalsForStep = domainGoals.filter(d => d.key !== "overallGoal");
+
+  // Track if we're actually using AI questions (not just if they exist)
+  const isUsingAIQuestions = transformedAIQuestions !== null && !aiLoading;
+
+  console.log("[GettingStarted] Domain goals status:", {
+    isUsingAI: isUsingAIQuestions,
+    transformedCount: transformedAIQuestions?.length,
+    fallbackCount: fallbackDomainGoals.length,
+    domainsUsing: isUsingAIQuestions ? "AI" : "FALLBACK",
+    domainGoalsForStepCount: domainGoalsForStep.length,
+  });
+
   // Load module data on mount
   useEffect(() => {
     if (!token) {
@@ -166,11 +326,26 @@ const GettingStarted: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Debug: Log cache and API status on mount
+  useEffect(() => {
+    console.log("%c=== GettingStarted Module Loaded ===", "color: blue; font-weight: bold; font-size: 14px");
+    console.log("[GettingStarted] Token available:", token ? "✓ Yes" : "✗ No");
+    console.log("[GettingStarted] AI Loading state:", aiLoading ? "⏳ Loading..." : "✓ Ready");
+    console.log("[GettingStarted] AI Error:", aiError ? "⚠️ " + aiError : "✓ None");
+    
+    // Import to check cache status
+    import("../hooks/useAIQuestions").then(({ getAICacheStatus }) => {
+      const cacheStatus = getAICacheStatus();
+      console.log("[GettingStarted] Cache Status:", cacheStatus);
+      console.log("%cTip: Add ?no-cache to URL to bypass cache and force fresh API call", "color: green");
+    });
+  }, []);
+
   // Handle module restart
   const handleRestart = async () => {
     if (!token) return;
     try {
-      const result = await requestModuleRestart(token, "getting-started");
+      const result = await requestModuleRestart(token, "modules/getting-started-modules");
       if (result.confirmationId) {
         setRestartConfirmId(result.confirmationId);
         setShowRestartConfirm(true);
@@ -185,7 +360,7 @@ const GettingStarted: React.FC = () => {
   const handleConfirmRestart = async () => {
     if (!token || !restartConfirmId) return;
     try {
-      await confirmModuleRestart(token, "getting-started", restartConfirmId);
+      await confirmModuleRestart(token, "modules/getting-started-modules", restartConfirmId);
       setShowRestartConfirm(false);
       setRestartConfirmId(null);
       setCurrentStep("overall");
@@ -203,12 +378,28 @@ const GettingStarted: React.FC = () => {
 
   const profileInitials = userdata?.email?.[0]?.toUpperCase() ?? "U";
 
-  // Save data to server
-  const saveData = async (updates: Partial<GettingStartedData>) => {
-    if (!token || !data) return;
+  // Save data to server - always send complete data structure
+  const saveData = async (updates: Partial<GettingStartedData>): Promise<boolean> => {
+    if (!token || !data) {
+      console.error("[GettingStarted] Cannot save: missing token or data");
+      return false;
+    }
 
     setSaving(true);
     try {
+      // Merge updates with current data to ensure we send complete structure
+      const completeData: GettingStartedData = {
+        progress: updates.progress ? { ...data.progress, ...updates.progress } : data.progress,
+        overallGoal: updates.overallGoal !== undefined ? updates.overallGoal : data.overallGoal,
+        goalPersonal: updates.goalPersonal !== undefined ? updates.goalPersonal : data.goalPersonal,
+        goalFamilyFriends: updates.goalFamilyFriends !== undefined ? updates.goalFamilyFriends : data.goalFamilyFriends,
+        goalChurchKingdom: updates.goalChurchKingdom !== undefined ? updates.goalChurchKingdom : data.goalChurchKingdom,
+        goalVocation: updates.goalVocation !== undefined ? updates.goalVocation : data.goalVocation,
+        goalCommunity: updates.goalCommunity !== undefined ? updates.goalCommunity : data.goalCommunity,
+      };
+
+      console.log("[GettingStarted] Saving complete data:", completeData);
+
       const response = await fetch(`${apiURL}modules/getting-started-modules`, {
         method: "PUT",
         headers: {
@@ -217,17 +408,25 @@ const GettingStarted: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify(updates),
+        body: JSON.stringify(completeData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save data");
+        const errorText = await response.text();
+        console.error("[GettingStarted] Save failed:", response.status, errorText);
+        throw new Error(`Failed to save data: ${response.status}`);
       }
 
       const updated = (await response.json()) as GettingStartedData;
+      console.log("[GettingStarted] Save successful, updated data:", updated);
       setData(updated);
+      setError(null);
+      return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      const errorMsg = err instanceof Error ? err.message : "Failed to save";
+      console.error("[GettingStarted] Save error:", errorMsg);
+      setError(errorMsg);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -410,6 +609,58 @@ const GettingStarted: React.FC = () => {
             </div>
           )}
 
+          {/* AI Loading Indicator - Show at top level */}
+          {aiLoading && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              border: "1px solid rgba(99, 102, 241, 0.3)",
+              borderRadius: "8px",
+              color: "#6366f1"
+            }}>
+              <Loader />
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Generating personalized AI questions...
+              </span>
+            </div>
+          )}
+
+          {aiError && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#ef4444"
+            }}>
+              <span style={{ fontSize: "14px" }}>⚠️ {aiError}</span>
+            </div>
+          )}
+
+          {!aiLoading && !aiError && aiQuestionsRaw && Object.keys(aiQuestionsRaw).length > 0 && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(34, 197, 94, 0.1)",
+              border: "1px solid rgba(34, 197, 94, 0.3)",
+              borderRadius: "8px",
+              color: "#22c55e"
+            }}>
+              <span style={{ fontSize: "14px" }}>✓ Personalized with AI insights</span>
+            </div>
+          )}
+
           {/* Step 1: Overall Goal */}
           {currentStep === "overall" && (
             <div className={styles.card}>
@@ -437,9 +688,11 @@ const GettingStarted: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    saveData({ overallGoal: data.overallGoal });
-                    setCurrentStep("domains");
+                  onClick={async () => {
+                    const success = await saveData({ overallGoal: data.overallGoal });
+                    if (success) {
+                      setCurrentStep("domains");
+                    }
                   }}
                   disabled={!data.overallGoal.trim() || saving}
                   className={`${styles.btn} ${styles["btn-primary"]}`}
@@ -459,10 +712,76 @@ const GettingStarted: React.FC = () => {
                 clarify, strengthen, realign, or add?
               </p>
 
+              {aiLoading && (
+                <div style={{
+                  padding: "40px 20px",
+                  textAlign: "center",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                }}>
+                  <Loader />
+                  <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>
+                    Generating personalized domain questions...
+                  </p>
+                </div>
+              )}
+
+              {aiError && (
+                <div style={{
+                  padding: "16px 20px",
+                  background: "rgba(255, 100, 100, 0.1)",
+                  border: "1px solid rgba(255, 100, 100, 0.3)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                  color: "rgba(255, 150, 150, 0.9)",
+                  fontSize: "14px",
+                }}>
+                  ⚠️ Unable to load AI questions: {aiError}. Using standard templates.
+                </div>
+              )}
+
+              {!aiLoading && aiQuestionsRaw && Object.keys(aiQuestionsRaw).length > 0 && !aiError && (
+                <div style={{
+                  padding: "12px 16px",
+                  background: "rgba(100, 200, 100, 0.1)",
+                  border: "1px solid rgba(100, 200, 100, 0.3)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                  color: "rgba(150, 255, 150, 0.9)",
+                  fontSize: "13px",
+                }}>
+                  ✓ Personalized with AI insights
+                </div>
+              )}
+
               <div className={styles["domain-grid"]}>
-                {domainGoals.map((domain) => (
+                {domainGoalsForStep.map((domain) => (
                   <div key={domain.key} className={styles["domain-card"]}>
-                    <h3>{domain.label}</h3>
+                    <h3>
+                      {domain.label}
+                      {isUsingAIQuestions ? (
+                        <span style={{
+                          marginLeft: "8px",
+                          fontSize: "12px",
+                          opacity: 0.9,
+                          fontWeight: "normal",
+                          color: "#10b981"
+                        }}>
+                          ✓ AI-Generated
+                        </span>
+                      ) : (
+                        <span style={{
+                          marginLeft: "8px",
+                          fontSize: "12px",
+                          opacity: 0.7,
+                          fontWeight: "normal",
+                          color: "#fbbf24"
+                        }}>
+                          (Sample Questions)
+                        </span>
+                      )}
+                    </h3>
                     <div className={styles["domain-examples"]}>Examples:</div>
                     <ul>
                       {domain.examples.map((ex, idx) => (
@@ -491,20 +810,24 @@ const GettingStarted: React.FC = () => {
                   Back
                 </button>
                 <button
-                  onClick={() => {
-                    saveData({
+                  onClick={async () => {
+                    const success = await saveData({
                       goalPersonal: data.goalPersonal,
                       goalFamilyFriends: data.goalFamilyFriends,
                       goalChurchKingdom: data.goalChurchKingdom,
                       goalVocation: data.goalVocation,
                       goalCommunity: data.goalCommunity,
                     });
-                    setCurrentStep("review");
+                    if (success) {
+                      setCurrentStep("review");
+                    } else {
+                      console.error("[GettingStarted] Failed to save, staying on domains step");
+                    }
                   }}
-                  disabled={saving}
+                  disabled={saving || aiLoading}
                   className={`${styles.btn} ${styles["btn-primary"]}`}
                 >
-                  {saving ? "Saving..." : "Review"}
+                  {saving ? "Saving..." : aiLoading ? "Loading..." : "Review"}
                 </button>
               </div>
             </div>
@@ -526,7 +849,7 @@ const GettingStarted: React.FC = () => {
                   </div>
                 </div>
 
-                {domainGoals.map((domain) => (
+                {domainGoalsForStep.map((domain) => (
                   <div key={domain.key} className={styles["review-item"]}>
                     <h3>{domain.label}</h3>
                     <div className={styles["review-content"]}>

@@ -8,7 +8,9 @@ import type { RootState } from "../store/store";
 import { apiURL, downloadModulePdfFromServer } from "../utils/exports";
 import useModuleAccess from "../hooks/useModuleAccess";
 import ModuleGatingBlock from "../components/ModuleGatingBlock";
+import Loader from "../components/Loader";
 import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
+import { useWhereIAmNowQuestions, useWhereIAmNowFollowUp } from "../hooks/useAIQuestions";
 
 type AssessmentColumn = "right" | "wrong" | "confused" | "missing";
 type DomainKey = "personal" | "family" | "church" | "vocation" | "community";
@@ -293,24 +295,6 @@ const ProgressTable = ({
 
 const MemoizedProgressTable = memo(ProgressTable);
 
-const getNextUnansweredStep = (data: TableData) => {
-  for (let d = 0; d < domains.length; d += 1) {
-    for (let q = 0; q < questionFlow.length; q += 1) {
-      const domainKey = domains[d].key;
-      const columnKey = questionFlow[q].column;
-      if (!data[domainKey][columnKey].trim()) {
-        return { domainIndex: d, questionIndex: q, isComplete: false };
-      }
-    }
-  }
-
-  return {
-    domainIndex: domains.length - 1,
-    questionIndex: questionFlow.length - 1,
-    isComplete: true,
-  };
-};
-
 const WhereIAmNow = () => {
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -322,6 +306,13 @@ const WhereIAmNow = () => {
   
   // Module access gating
   const { isLocked } = useModuleAccess("where-i-am-now");
+  
+  // AI Questions hooks (with fallback to hardcoded questions)
+  console.log("[WhereIAmNow] Token available:", token ? "yes" : "no");
+  const { questionsByDomain: aiQuestionsByDomain, loading: aiLoading, error: aiError } = useWhereIAmNowQuestions(token);
+  const { generateFollowUp: _generateFollowUp } = useWhereIAmNowFollowUp(token);
+  
+  console.log("[WhereIAmNow] AI questions - loading:", aiLoading, "domains:", Object.keys(aiQuestionsByDomain).length, "error:", aiError);
   
   // Module restart state
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
@@ -339,7 +330,7 @@ const WhereIAmNow = () => {
 
   const [tableData, setTableData] = useState<TableData>(createEmptyTableData());
   const [followupTableData, setFollowupTableData] = useState<TableData>(
-    createEmptyTableData(),
+    createEmptyTableData()
   );
 
   const [domainIndex, setDomainIndex] = useState(0);
@@ -367,9 +358,145 @@ const WhereIAmNow = () => {
 
   const [analysis, setAnalysis] = useState("");
 
+  // Build dynamic question flow from AI questions if available
+  const buildAIQuestionFlow = (aiQuestionsByDomain: any): QuestionStep[] | null => {
+    if (!aiQuestionsByDomain) {
+      return null;
+    }
+
+    try {
+      console.log("[WhereIAmNow] Building question flow from:", {
+        type: typeof aiQuestionsByDomain,
+        isArray: Array.isArray(aiQuestionsByDomain),
+        length: Array.isArray(aiQuestionsByDomain) ? aiQuestionsByDomain.length : Object.keys(aiQuestionsByDomain).length,
+      });
+
+      const questionColumns: AssessmentColumn[] = ["right", "wrong", "confused", "missing"];
+      const questionLabels = ["What is right", "What is wrong", "What is confused", "What is missing"];
+      const flow: QuestionStep[] = [];
+
+      // Fallback questions in case AI returns fewer than needed
+      const fallbackQuestions: QuestionStep[] = [
+        {
+          column: "right",
+          label: "What is right",
+          prompt: "What has been going well for you in this area?",
+          placeholder: "Share Your Thoughts ... What is working well ? What are you grateful for in this area ? ",
+        },
+        {
+          column: "wrong",
+          label: "What is wrong",
+          prompt: "What feels off, difficult, or draining in this area right now?",
+          placeholder: "Write 1-3 sentences about what is not going well...",
+        },
+        {
+          column: "confused",
+          label: "What is confused",
+          prompt: "Where do you feel unclear, conflicted, or uncertain?",
+          placeholder: "Write 1-3 sentences about confusion or mixed signals...",
+        },
+        {
+          column: "missing",
+          label: "What is missing",
+          prompt: "What do you sense is absent that would make this area healthier?",
+          placeholder: "Write 1-3 sentences about what is missing...",
+        },
+      ];
+
+      let questionsToUse: any[] = [];
+
+      // Handle ARRAY format (flat list of questions)
+      if (Array.isArray(aiQuestionsByDomain)) {
+        console.log("[WhereIAmNow] Processing array format");
+        // Group by domain, then take first domain's questions
+        const byDomain: Record<string, any[]> = {};
+        aiQuestionsByDomain.forEach((q: any) => {
+          const domain = q.domain?.toLowerCase() || "unknown";
+          if (!byDomain[domain]) {
+            byDomain[domain] = [];
+          }
+          byDomain[domain].push(q);
+        });
+        questionsToUse = Object.values(byDomain)[0] || [];
+      }
+      // Handle OBJECT format (organized by domain)
+      else if (typeof aiQuestionsByDomain === 'object' && Object.keys(aiQuestionsByDomain).length > 0) {
+        console.log("[WhereIAmNow] Processing object format");
+        const firstDomain = Object.values(aiQuestionsByDomain)[0];
+        if (Array.isArray(firstDomain)) {
+          questionsToUse = firstDomain;
+        }
+      }
+
+      if (!questionsToUse || questionsToUse.length === 0) {
+        console.log("[WhereIAmNow] No questions found to use");
+        return null;
+      }
+
+      console.log("[WhereIAmNow] AI returned", questionsToUse.length, "questions");
+
+      // Map AI questions to the 4 required columns
+      // If AI returns fewer than 4, fill the rest with fallback
+      for (let i = 0; i < 4; i++) {
+        let questionStep: QuestionStep;
+
+        if (i < questionsToUse.length) {
+          // Use AI question for this slot
+          const aiQ = questionsToUse[i];
+          questionStep = {
+            column: questionColumns[i],
+            label: questionLabels[i],
+            prompt: aiQ.prompt || aiQ.question || questionLabels[i],
+            placeholder: aiQ.guidance || `Share your thoughts about ${questionLabels[i].toLowerCase()}...`,
+          };
+          console.log(`[WhereIAmNow] Column ${i} (${questionColumns[i]}): Using AI question`);
+        } else {
+          // Use fallback for this slot
+          questionStep = fallbackQuestions[i];
+          console.log(`[WhereIAmNow] Column ${i} (${questionColumns[i]}): Using fallback question`);
+        }
+
+        flow.push(questionStep);
+      }
+
+      console.log("[WhereIAmNow] Successfully built flow with", flow.length, "questions (", 
+        questionsToUse.length, "from AI,", 4 - questionsToUse.length, "from fallback)");
+      
+      return flow.length === 4 ? flow : null;
+    } catch (error) {
+      console.error("[WhereIAmNow] Error building AI question flow:", error);
+      return null;
+    }
+  };
+
+  const dynamicQuestionFlow = buildAIQuestionFlow(aiQuestionsByDomain);
+  const effectiveQuestionFlow = dynamicQuestionFlow || questionFlow;
+
+  // Function to find next unanswered step - uses effective flow
+  const getNextUnansweredStep = (data: TableData) => {
+    for (let d = 0; d < domains.length; d += 1) {
+      for (let q = 0; q < effectiveQuestionFlow.length; q += 1) {
+        const domainKey = domains[d].key;
+        const columnKey = effectiveQuestionFlow[q].column;
+        if (!data[domainKey][columnKey].trim()) {
+          return { domainIndex: d, questionIndex: q, isComplete: false };
+        }
+      }
+    }
+
+    return {
+      domainIndex: domains.length - 1,
+      questionIndex: effectiveQuestionFlow.length - 1,
+      isComplete: true,
+    };
+  };
+
   const currentDomain = domains[domainIndex];
-  const currentQuestion = questionFlow[questionIndex];
-  const totalQuestions = domains.length * questionFlow.length;
+  const currentQuestion = effectiveQuestionFlow[questionIndex];
+  const totalQuestions = domains.length * effectiveQuestionFlow.length;
+
+  // Track if we're using AI questions
+  const isUsingAIQuestions = dynamicQuestionFlow !== null && !aiLoading;
 
   const answeredCount = useMemo(() => {
     let count = 0;
@@ -413,7 +540,7 @@ const WhereIAmNow = () => {
       typeof restored.flow.questionIndex === "number"
         ? Math.max(
             0,
-            Math.min(questionFlow.length - 1, restored.flow.questionIndex),
+            Math.min(effectiveQuestionFlow.length - 1, restored.flow.questionIndex),
           )
         : resume.questionIndex;
 
@@ -456,22 +583,17 @@ const WhereIAmNow = () => {
           return;
         }
 
-        const json = (await response.json()) as {
-          data?: Partial<WhereIAmNowPayload>;
-        };
+        const json = (await response.json()) as WhereIAmNowPayload;
 
-        if (isCancelled || !json.data) {
+        if (isCancelled || !json) {
           return;
         }
 
         applyRestoredData({
-          tableData:
-            (json.data.tableData as TableData) || createEmptyTableData(),
-          followupTableData:
-            (json.data.followupTableData as TableData) ||
-            createEmptyTableData(),
-          analysis: json.data.analysis || "",
-          flow: json.data.flow || {},
+          tableData: json.tableData || createEmptyTableData(),
+          followupTableData: json.followupTableData || createEmptyTableData(),
+          analysis: json.analysis || "",
+          flow: json.flow || {},
         });
       } catch {
         // Keep local fallback when backend is unavailable
@@ -504,6 +626,23 @@ const WhereIAmNow = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Debug: Log cache and API status on mount
+  useEffect(() => {
+    console.log("%c=== Where I Am Now Module Loaded ===", "color: purple; font-weight: bold; font-size: 14px");
+    console.log("[WhereIAmNow] Token available:", token ? "✓ Yes" : "✗ No");
+    console.log("[WhereIAmNow] AI Loading state:", aiLoading ? "⏳ Loading..." : "✓ Ready");
+    console.log("[WhereIAmNow] AI Domains loaded:", Object.keys(aiQuestionsByDomain).length);
+    console.log("[WhereIAmNow] AI Error:", aiError ? "⚠️ " + aiError : "✓ None");
+    
+    // Import to check cache status
+    import("../hooks/useAIQuestions").then(({ getAICacheStatus }) => {
+      const cacheStatus = getAICacheStatus();
+      console.log("[WhereIAmNow] Cache Status:", cacheStatus);
+      console.log("%cTip: Add ?no-cache to URL to bypass cache and force fresh API call", "color: green");
+    });
+  }, []);
+
 
   useEffect(() => {
     if (!isComplete && !isStepSubmitted && !isEditingExisting) {
@@ -616,13 +755,13 @@ const WhereIAmNow = () => {
   };
 
   const moveToNextStep = () => {
-    if (questionIndex < questionFlow.length - 1) {
-      setQuestionIndex((prev) => prev + 1);
+    if (questionIndex < effectiveQuestionFlow.length - 1) {
+      setQuestionIndex((prev: number) => prev + 1);
       return;
     }
 
     if (domainIndex < domains.length - 1) {
-      setDomainIndex((prev) => prev + 1);
+      setDomainIndex((prev: number) => prev + 1);
       setQuestionIndex(0);
       return;
     }
@@ -637,7 +776,7 @@ const WhereIAmNow = () => {
     }
 
     const activeDomain = domains[domainIndex];
-    const activeQuestion = questionFlow[questionIndex];
+    const activeQuestion = effectiveQuestionFlow[questionIndex];
 
     setTableData((prev) => ({
       ...prev,
@@ -737,7 +876,7 @@ const WhereIAmNow = () => {
     if (!cleanedFollowup && !isEditingExisting) return;
 
     const activeDomain = domains[domainIndex];
-    const activeQuestion = questionFlow[questionIndex];
+    const activeQuestion = effectiveQuestionFlow[questionIndex];
 
     setFollowupTableData((prev) => ({
       ...prev,
@@ -1045,6 +1184,42 @@ const WhereIAmNow = () => {
 
       <div className={styles.layout}>
         <div className={styles.content}>
+          {/* AI Loading Indicator - Show at top level */}
+          {aiLoading && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              border: "1px solid rgba(99, 102, 241, 0.3)",
+              borderRadius: "8px",
+              color: "#6366f1"
+            }}>
+              <Loader />
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Generating personalized assessment questions...
+              </span>
+            </div>
+          )}
+
+          {aiError && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "20px",
+              padding: "12px 16px",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#ef4444"
+            }}>
+              <span style={{ fontSize: "14px" }}>⚠️ {aiError}</span>
+            </div>
+          )}
+
           <div className={styles["left-panel"]}>
             <section className={styles["worksheet-shell"]}>
               <div className={styles["block-instructions"]}>
@@ -1071,6 +1246,53 @@ const WhereIAmNow = () => {
                 </div>
               </div>
 
+              {aiLoading && (
+                <div style={{
+                  padding: "40px 20px",
+                  textAlign: "center",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                }}>
+                  <Loader />
+                  <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>
+                    Generating personalized assessment questions...
+                  </p>
+                </div>
+              )}
+
+              {aiError && (
+                <div style={{
+                  padding: "16px 20px",
+                  background: "rgba(255, 100, 100, 0.1)",
+                  border: "1px solid rgba(255, 100, 100, 0.3)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                  color: "rgba(255, 150, 150, 0.9)",
+                  fontSize: "14px",
+                }}>
+                  ⚠️ Unable to load AI questions: {aiError}. Using standard assessment.
+                </div>
+              )}
+
+              {!aiLoading && aiQuestionsByDomain && (
+                Array.isArray(aiQuestionsByDomain) 
+                  ? aiQuestionsByDomain.length > 0 && !aiError
+                  : Object.keys(aiQuestionsByDomain).length > 0 && !aiError
+              ) && (
+                <div style={{
+                  padding: "12px 16px",
+                  background: "rgba(100, 200, 100, 0.1)",
+                  border: "1px solid rgba(100, 200, 100, 0.3)",
+                  borderRadius: "12px",
+                  marginBottom: "24px",
+                  color: "rgba(150, 255, 150, 0.9)",
+                  fontSize: "13px",
+                }}>
+                  ✓ Personalized with AI insights
+                </div>
+              )}
+
               {!isComplete && (
                 <>
                   <div
@@ -1094,6 +1316,27 @@ const WhereIAmNow = () => {
                   <div className={styles["question-card"]}>
                     <h2 className={styles["question-title"]}>
                       {currentDomain.config.title}: {currentQuestion.label}?
+                      {isUsingAIQuestions ? (
+                        <span style={{
+                          marginLeft: "8px",
+                          fontSize: "14px",
+                          opacity: 0.9,
+                          fontWeight: "normal",
+                          color: "#10b981"
+                        }}>
+                          ✓ AI-Generated
+                        </span>
+                      ) : (
+                        <span style={{
+                          marginLeft: "8px",
+                          fontSize: "14px",
+                          opacity: 0.7,
+                          fontWeight: "normal",
+                          color: "#fbbf24"
+                        }}>
+                          (Sample Question)
+                        </span>
+                      )}
                     </h2>
                     <p className={styles["question-prompt"]}>
                       {currentQuestion.prompt}
@@ -1244,7 +1487,7 @@ const WhereIAmNow = () => {
                 lastUpdatedCell={lastUpdatedCell}
                 handleEditQuestion={handleEditQuestion}
                 domains={domains}
-                questionFlow={questionFlow}
+                questionFlow={effectiveQuestionFlow}
               />
             </section>
 
