@@ -1044,8 +1044,24 @@ const WhereIAmNow = () => {
     try {
       const result = await confirmModuleRestart(token, "modules/where-i-am-now", restartConfirmId);
       if (result?.status === "reset_complete") {
-        // Reload page to refresh all data and state
-        window.location.reload();
+        // Reset all local state
+        setTableData(createEmptyTableData());
+        setFollowupTableData(createEmptyTableData());
+        setAnalysis("");
+        setDomainIndex(0);
+        setQuestionIndex(0);
+        setInputValue("");
+        setLastReflection("");
+        setIsComplete(false);
+        setIsStepSubmitted(false);
+        setFollowupValue("");
+        setIsEditingExisting(false);
+        setLastUpdatedCell(null);
+        setHasAnswered(false);
+        
+        // Clear restart modal state
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
       } else {
         console.error("Restart failed:", result?.message);
       }

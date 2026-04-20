@@ -73,10 +73,13 @@ const Perspective = () => {
     if (!token || !restartConfirmId) return;
 
     try {
-      await confirmModuleRestart(token, "modules/perspective", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      window.location.reload();
+      const result = await confirmModuleRestart(token, "modules/perspective", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
+      } else {
+        console.error("Failed to reset module:", result?.message);
+      }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
     }

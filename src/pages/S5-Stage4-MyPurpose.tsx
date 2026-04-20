@@ -98,12 +98,15 @@ const MyPurpose = () => {
     if (!token || !restartConfirmId) return;
 
     try {
-      await confirmModuleRestart(token, "modules/my-purpose", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      setMissionText("");
-      setChatInput("");
-      window.location.reload();
+      const result = await confirmModuleRestart(token, "modules/my-purpose", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
+        setMissionText("");
+        setChatInput("");
+      } else {
+        console.error("Failed to reset module:", result?.message);
+      }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
     }

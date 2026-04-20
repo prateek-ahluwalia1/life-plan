@@ -163,10 +163,14 @@ const SurrenderStage = () => {
     if (!token || !restartConfirmId) return;
 
     try {
-      await confirmModuleRestart(token, "modules/surrender", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      setItems(defaultSurrenderItems);
+      const result = await confirmModuleRestart(token, "modules/surrender", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
+        setItems(defaultSurrenderItems);
+      } else {
+        console.error("Failed to reset module:", result?.message);
+      }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
     }

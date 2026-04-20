@@ -153,10 +153,27 @@ const HowIGotHere = () => {
     if (!token || !restartConfirmId) return;
 
     try {
-      await confirmModuleRestart(token, "modules/perspective/module-3", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      window.location.reload();
+      const result = await confirmModuleRestart(token, "modules/perspective/module-3", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
+        setModuleData({
+          turningPoints: [
+            { title: "", description: "", impact: "" },
+            { title: "", description: "", impact: "" },
+            { title: "", description: "", impact: "" },
+          ],
+          keyDecisions: "",
+          shapingRelationships: "",
+          challengesOvercome: "",
+          achievements: "",
+          spiritualMoments: "",
+          reflectionNotes: "",
+          isComplete: false,
+        });
+      } else {
+        console.error("Failed to reset module:", result?.message);
+      }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
     }

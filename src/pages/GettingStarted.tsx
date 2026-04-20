@@ -369,8 +369,28 @@ const GettingStarted: React.FC = () => {
     try {
       const result = await confirmModuleRestart(token, "modules/getting-started-modules", restartConfirmId);
       if (result?.status === "reset_complete") {
-        // Reload page to refresh all data and state
-        window.location.reload();
+        // Reset local state
+        setData({
+          progress: {
+            overallGoalComplete: false,
+            personalDomainComplete: false,
+            familyDomainComplete: false,
+            churchDomainComplete: false,
+            vocationDomainComplete: false,
+            communityDomainComplete: false,
+          },
+          overallGoal: "",
+          goalPersonal: "",
+          goalFamilyFriends: "",
+          goalChurchKingdom: "",
+          goalVocation: "",
+          goalCommunity: "",
+        });
+        // Reset to first step
+        setCurrentStep("overall");
+        setError(null);
+        setShowRestartConfirm(false);
+        setRestartConfirmId(null);
       } else {
         setError("Failed to restart module: " + (result?.message || "Unknown error"));
       }
