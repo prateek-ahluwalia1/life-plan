@@ -1,0 +1,217 @@
+/* SynthesisConfirmationModal.module.css */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContainer {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  padding: 32px 32px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #f8fafb 100%);
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.modalSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+}
+
+.synthesisContent {
+  padding: 32px;
+  background: #fafbfc;
+  border-left: 4px solid #0e6dd9;
+}
+
+.synthesizedText {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+  margin: 0;
+  font-weight: 400;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.guidance {
+  padding: 20px 32px;
+  background: #f0f4f8;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.guidanceText {
+  font-size: 13px;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.modalFooter {
+  padding: 24px 32px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  background: #fff;
+}
+
+.buttonEdit,
+.buttonConfirm {
+  padding: 10px 24px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.buttonEdit {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.buttonEdit:hover:not(:disabled) {
+  background-color: #e8e8e8;
+  border-color: #ccc;
+}
+
+.buttonConfirm {
+  background-color: #0e6dd9;
+  color: white;
+  min-width: 150px;
+}
+
+.buttonConfirm:hover:not(:disabled) {
+  background-color: #0a5bb5;
+  box-shadow: 0 4px 12px rgba(14, 109, 217, 0.3);
+}
+
+.buttonEdit:disabled,
+.buttonConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #0e6dd9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modalContainer {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .modalHeader {
+    padding: 24px 20px 16px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+
+  .synthesisContent {
+    padding: 20px;
+  }
+
+  .guidance {
+    padding: 16px 20px;
+  }
+
+  .modalFooter {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .buttonEdit,
+  .buttonConfirm {
+    width: 100%;
+  }
+
+  .buttonConfirm {
+    min-width: unset;
+  }
+}

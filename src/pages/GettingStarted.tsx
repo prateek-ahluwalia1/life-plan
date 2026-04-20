@@ -4,10 +4,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { logout } from "../store/slices/authSlice";
 import type { RootState } from "../store/store";
 import { apiURL } from "../utils/exports";
-import Loader from "../components/Loader";
+import SynthesisConfirmationModal from "../components/SynthesisConfirmationModal";
 import styles from "../css/GettingStarted.module.css";
 import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
 import { useGettingStartedQuestions } from "../hooks/useAIQuestions";
+import { synthesizeResponse, isValidResponse } from "../utils/synthesisUtils";
 
 interface GettingStartedData {
   progress: {
@@ -99,7 +100,6 @@ const GettingStarted: React.FC = () => {
 
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<GettingStartedData | null>(null);
   const [currentStep, setCurrentStep] = useState<"overall" | "domains" | "review">(
@@ -109,6 +109,15 @@ const GettingStarted: React.FC = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  
+  // SYNTHESIS CONFIRMATION STATE
+  const [showSynthesisModal, setShowSynthesisModal] = useState(false);
+  const [synthesisData, setSynthesisData] = useState<{
+    title: string;
+    synthesized: string;
+    field: keyof GettingStartedData;
+    mainResponse: string;
+  } | null>(null);
 
   // Get AI questions (with fallback to hardcoded)
   console.log("[GettingStarted] Token available:", token ? "yes" : "no");
@@ -304,8 +313,6 @@ const GettingStarted: React.FC = () => {
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
         console.error("Load error:", errorMsg);
         setError(errorMsg);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -360,12 +367,13 @@ const GettingStarted: React.FC = () => {
   const handleConfirmRestart = async () => {
     if (!token || !restartConfirmId) return;
     try {
-      await confirmModuleRestart(token, "modules/getting-started-modules", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      setCurrentStep("overall");
-      // Reload data
-      window.location.reload();
+      const result = await confirmModuleRestart(token, "modules/getting-started-modules", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        // Reload page to refresh all data and state
+        window.location.reload();
+      } else {
+        setError("Failed to restart module: " + (result?.message || "Unknown error"));
+      }
     } catch (_err) {
       setError("Failed to restart module");
     }
@@ -432,20 +440,54 @@ const GettingStarted: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "400px",
-        }}
-      >
-        <Loader />
-      </div>
-    );
-  }
+  // SYNTHESIS CONFIRMATION HANDLERS
+  const handleShowSynthesis = (
+    fieldKey: keyof GettingStartedData,
+    mainResponse: string
+  ) => {
+    if (!isValidResponse(mainResponse)) {
+      // Just advance without synthesis for empty responses
+      return;
+    }
+
+    const synthesized = synthesizeResponse(mainResponse, []);
+    const fieldLabel = {
+      overallGoal: "Overall LifePlan Goal",
+      goalPersonal: "Personal Domain Goal",
+      goalFamilyFriends: "Family & Friends Domain Goal",
+      goalChurchKingdom: "Church & Kingdom Domain Goal",
+      goalVocation: "Vocation Domain Goal",
+      goalCommunity: "Community Domain Goal",
+      progress: "Progress",
+    }[fieldKey] || "Response";
+
+    setSynthesisData({
+      title: `Confirming ${fieldLabel}`,
+      synthesized,
+      field: fieldKey,
+      mainResponse,
+    });
+    setShowSynthesisModal(true);
+  };
+
+  const handleSynthesisConfirm = () => {
+    if (!synthesisData) return;
+
+    // Save the synthesized response
+    saveData({ [synthesisData.field]: synthesisData.synthesized });
+    setShowSynthesisModal(false);
+    setSynthesisData(null);
+
+    // Move to next step
+    if (synthesisData.field === "overallGoal") {
+      setCurrentStep("domains");
+    }
+  };
+
+  const handleSynthesisEdit = () => {
+    // Return to editing
+    setShowSynthesisModal(false);
+  };
 
   if (!data) {
     return (
@@ -622,7 +664,6 @@ const GettingStarted: React.FC = () => {
               borderRadius: "8px",
               color: "#6366f1"
             }}>
-              <Loader />
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
                 Generating personalized AI questions...
               </span>
@@ -688,11 +729,9 @@ const GettingStarted: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    const success = await saveData({ overallGoal: data.overallGoal });
-                    if (success) {
-                      setCurrentStep("domains");
-                    }
+                  onClick={() => {
+                    // Show synthesis confirmation before saving
+                    handleShowSynthesis("overallGoal", data.overallGoal);
                   }}
                   disabled={!data.overallGoal.trim() || saving}
                   className={`${styles.btn} ${styles["btn-primary"]}`}
@@ -720,7 +759,6 @@ const GettingStarted: React.FC = () => {
                   borderRadius: "12px",
                   marginBottom: "24px",
                 }}>
-                  <Loader />
                   <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>
                     Generating personalized domain questions...
                   </p>
@@ -810,18 +848,22 @@ const GettingStarted: React.FC = () => {
                   Back
                 </button>
                 <button
-                  onClick={async () => {
-                    const success = await saveData({
+                  onClick={() => {
+                    // Show synthesis confirmation before saving all domain goals
+                    const allResponses = {
                       goalPersonal: data.goalPersonal,
                       goalFamilyFriends: data.goalFamilyFriends,
                       goalChurchKingdom: data.goalChurchKingdom,
                       goalVocation: data.goalVocation,
                       goalCommunity: data.goalCommunity,
-                    });
-                    if (success) {
+                    };
+                    
+                    // Synthesize each domain goal
+                    const hasAnyResponse = Object.values(allResponses).some(r => r.trim());
+                    if (hasAnyResponse) {
+                      // Save all domains at once
+                      saveData(allResponses);
                       setCurrentStep("review");
-                    } else {
-                      console.error("[GettingStarted] Failed to save, staying on domains step");
                     }
                   }}
                   disabled={saving || aiLoading}
@@ -960,6 +1002,15 @@ const GettingStarted: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* SYNTHESIS CONFIRMATION MODAL */}
+      <SynthesisConfirmationModal
+        isOpen={showSynthesisModal}
+        title={synthesisData?.title || ""}
+        synthesizedText={synthesisData?.synthesized || ""}
+        onConfirm={handleSynthesisConfirm}
+        onEdit={handleSynthesisEdit}
+      />
     </div>
   );
 };

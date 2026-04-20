@@ -8,9 +8,10 @@ import type { RootState } from "../store/store";
 import { apiURL, downloadModulePdfFromServer } from "../utils/exports";
 import useModuleAccess from "../hooks/useModuleAccess";
 import ModuleGatingBlock from "../components/ModuleGatingBlock";
-import Loader from "../components/Loader";
 import { requestModuleRestart, confirmModuleRestart } from "../utils/moduleHelpers";
 import { useWhereIAmNowQuestions, useWhereIAmNowFollowUp } from "../hooks/useAIQuestions";
+import SynthesisConfirmationModal from "../components/SynthesisConfirmationModal";
+import { synthesizeResponse, isValidResponse } from "../utils/synthesisUtils";
 
 type AssessmentColumn = "right" | "wrong" | "confused" | "missing";
 type DomainKey = "personal" | "family" | "church" | "vocation" | "community";
@@ -352,6 +353,15 @@ const WhereIAmNow = () => {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRemoteSyncReady, setIsRemoteSyncReady] = useState(false);
+
+  // Synthesis confirmation modal state
+  const [showSynthesisModal, setShowSynthesisModal] = useState(false);
+  const [synthesisData, setSynthesisData] = useState<{
+    domain: DomainKey;
+    column: AssessmentColumn;
+    mainResponse: string;
+    synthesized: string;
+  } | null>(null);
 
   const persistTimeoutRef = useRef<number | null>(null);
   const pendingSaveRef = useRef(false);
@@ -769,32 +779,55 @@ const WhereIAmNow = () => {
     setIsComplete(true);
   };
 
-  const handleSubmitAnswer = () => {
-    const cleaned = inputValue.trim();
-    if (!cleaned || isComplete) {
+  // Synthesis handlers for table responses
+  const handleShowSynthesis = (domain: DomainKey, column: AssessmentColumn, mainResponse: string) => {
+    if (!isValidResponse(mainResponse)) {
+      console.warn("[WhereIAmNow] Response too short, not showing synthesis modal");
+      // Still save the response
+      setTableData((prev) => ({
+        ...prev,
+        [domain]: {
+          ...prev[domain],
+          [column]: mainResponse,
+        },
+      }));
       return;
     }
 
-    const activeDomain = domains[domainIndex];
-    const activeQuestion = effectiveQuestionFlow[questionIndex];
+    const synthesized = synthesizeResponse(mainResponse, []);
+    setSynthesisData({
+      domain,
+      column,
+      mainResponse,
+      synthesized,
+    });
+    setShowSynthesisModal(true);
+  };
 
+  const handleSynthesisConfirm = async () => {
+    if (!synthesisData) return;
+    
+    const { domain, column, mainResponse } = synthesisData;
+    
+    // Save the response to the table
     setTableData((prev) => ({
       ...prev,
-      [activeDomain.key]: {
-        ...prev[activeDomain.key],
-        [activeQuestion.column]: cleaned,
+      [domain]: {
+        ...prev[domain],
+        [column]: mainResponse,
       },
     }));
 
     setLastUpdatedCell({
-      domain: activeDomain.key,
-      column: activeQuestion.column,
+      domain,
+      column,
     });
+    
     setLastReflection(
       getReflectionText(
-        cleaned,
-        activeDomain.config.title,
-        activeQuestion.label,
+        mainResponse,
+        domains.find(d => d.key === domain)?.config.title || domain,
+        `${column} assessment`,
       ),
     );
     setInputValue("");
@@ -809,9 +842,29 @@ const WhereIAmNow = () => {
         .getElementById("affirmationBlock")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
+    
+    // Clear modal
+    setShowSynthesisModal(false);
+    setSynthesisData(null);
+  };
 
-    // NOTE: moveToNextStep() is intentionally NOT called here.
-    // Navigation happens only after the user submits the follow-up answer.
+  const handleSynthesisEdit = () => {
+    // Just close the modal and let user continue editing
+    setShowSynthesisModal(false);
+    setSynthesisData(null);
+  };
+
+  const handleSubmitAnswer = () => {
+    const cleaned = inputValue.trim();
+    if (!cleaned || isComplete) {
+      return;
+    }
+
+    const activeDomain = domains[domainIndex];
+    const activeQuestion = effectiveQuestionFlow[questionIndex];
+
+    // Show synthesis confirmation before saving
+    handleShowSynthesis(activeDomain.key, activeQuestion.column, cleaned);
   };
 
   // const getNextPrompt = () => {
@@ -989,11 +1042,13 @@ const WhereIAmNow = () => {
     if (!token || !restartConfirmId) return;
 
     try {
-      await confirmModuleRestart(token, "modules/where-i-am-now", restartConfirmId);
-      setShowRestartConfirm(false);
-      setRestartConfirmId(null);
-      // Reset local state
-      handleResetTable();
+      const result = await confirmModuleRestart(token, "modules/where-i-am-now", restartConfirmId);
+      if (result?.status === "reset_complete") {
+        // Reload page to refresh all data and state
+        window.location.reload();
+      } else {
+        console.error("Restart failed:", result?.message);
+      }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
     }
@@ -1197,7 +1252,6 @@ const WhereIAmNow = () => {
               borderRadius: "8px",
               color: "#6366f1"
             }}>
-              <Loader />
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
                 Generating personalized assessment questions...
               </span>
@@ -1254,7 +1308,6 @@ const WhereIAmNow = () => {
                   borderRadius: "12px",
                   marginBottom: "24px",
                 }}>
-                  <Loader />
                   <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>
                     Generating personalized assessment questions...
                   </p>
@@ -1591,6 +1644,15 @@ const WhereIAmNow = () => {
           </div>
         </div>
       )}
+
+      {/* SYNTHESIS CONFIRMATION MODAL */}
+      <SynthesisConfirmationModal
+        isOpen={showSynthesisModal}
+        title={`Confirm: ${synthesisData?.domain || ""}`}
+        synthesizedText={synthesisData?.synthesized || ""}
+        onConfirm={handleSynthesisConfirm}
+        onEdit={handleSynthesisEdit}
+      />
     </div>
   );
 };
