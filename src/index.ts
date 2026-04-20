@@ -9,6 +9,7 @@ import perspectiveRoutes from "./routes/perspective.routes";
 import lifePlanModulesRoutes from "./routes/lifePlanModules.routes";
 import gettingStartedModulesRoutes from "./routes/gettingStartedModules.routes";
 import chatRoutes from "./routes/chat.routes";
+import modulesAIRoutes from "./routes/modulesAI.routes";
 const PORT = process.env.PORT;
 
 const app: Express = express();
@@ -40,6 +41,7 @@ app.use("/api/v1/modules", whereIAmNowRoutes);
 app.use("/api/v1/modules", perspectiveRoutes);
 app.use("/api/v1/modules", lifePlanModulesRoutes);
 app.use("/api/v1/modules", gettingStartedModulesRoutes);
+app.use("/api/v1/modules", modulesAIRoutes);
 app.use("/api/v1/chat", chatRoutes);
 
 app.get("/", (req, res) => {

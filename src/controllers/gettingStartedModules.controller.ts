@@ -165,28 +165,37 @@ const upsertGettingStartedModules = async (
       doc = new GettingStartedModules({ userId });
     }
 
-    // Update progress fields
-    if (progress) {
+    // Update progress fields if provided
+    if (progress && typeof progress === "object") {
       const progressPatch = sanitizeProgressPatch(progress);
-      doc.progress = { ...doc.progress, ...progressPatch };
+      if (Object.keys(progressPatch).length > 0) {
+        doc.progress = { ...doc.progress, ...progressPatch };
+      }
     }
 
-    // Update goal fields
-    if (overallGoal !== undefined) doc.overallGoal = sanitizeText(overallGoal);
-    if (goalPersonal !== undefined)
+    // Always update goal fields if they're provided (even if empty string, that's intentional)
+    if (overallGoal !== undefined) {
+      doc.overallGoal = sanitizeText(overallGoal);
+    }
+    if (goalPersonal !== undefined) {
       doc.goalPersonal = sanitizeText(goalPersonal);
-    if (goalFamilyFriends !== undefined)
+    }
+    if (goalFamilyFriends !== undefined) {
       doc.goalFamilyFriends = sanitizeText(goalFamilyFriends);
-    if (goalChurchKingdom !== undefined)
+    }
+    if (goalChurchKingdom !== undefined) {
       doc.goalChurchKingdom = sanitizeText(goalChurchKingdom);
-    if (goalVocation !== undefined)
+    }
+    if (goalVocation !== undefined) {
       doc.goalVocation = sanitizeText(goalVocation);
-    if (goalCommunity !== undefined)
+    }
+    if (goalCommunity !== undefined) {
       doc.goalCommunity = sanitizeText(goalCommunity);
+    }
 
     await doc.save();
-    const normalized = normalizePayload(doc.toObject());
 
+    const normalized = normalizePayload(doc.toObject());
     return res.status(200).json(normalized);
   } catch (error) {
     console.error("Upsert Getting Started Modules error:", error);
