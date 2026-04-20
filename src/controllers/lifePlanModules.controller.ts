@@ -272,7 +272,7 @@ const resetLifePlanModules = async (
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const { confirmationId } = req.body as { confirmationId?: string };
+    const confirmationId = req.body?.confirmationId as string | undefined;
 
     // If no confirmationId provided, generate one and request confirmation
     if (!confirmationId) {
