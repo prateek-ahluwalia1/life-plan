@@ -245,6 +245,7 @@ nav {
 /* ====================== GLASSMORPHISM CARD STYLES ====================== */
 .card {
   background: rgba(255, 255, 255, 0.03);
+  color: white;
   backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
