@@ -1,8 +1,6 @@
-// src/App.tsx
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
-
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
