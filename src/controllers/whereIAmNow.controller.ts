@@ -2,6 +2,10 @@ import type { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import WhereIAmNow from "../models/whereIAmNow.model";
 import { buildModulePdf } from "../services/pdf.service";
+import {
+  createConfirmationToken,
+  verifyConfirmationToken,
+} from "../services/confirmationService";
 import type {
   AssessmentColumn,
   DomainKey,
@@ -423,8 +427,33 @@ const resetWhereIAmNow = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    const { confirmationId } = req.body as { confirmationId?: string };
+
+    // If no confirmationId provided, generate one and request confirmation
+    if (!confirmationId) {
+      const newConfirmationId = createConfirmationToken(userId, "reset_where_i_am_now");
+      return res.status(200).json({
+        status: "confirmation_required",
+        confirmationId: newConfirmationId,
+        message: "Please confirm module restart",
+      });
+    }
+
+    // Verify confirmation token
+    const isValid = verifyConfirmationToken(confirmationId, userId, "reset_where_i_am_now");
+    if (!isValid) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid or expired confirmation ID",
+      });
+    }
+
+    // Token is valid, proceed with reset
     await WhereIAmNow.findOneAndDelete({ userId });
-    return res.status(200).json({ message: "Where I Am Now progress reset" });
+    return res.status(200).json({
+      status: "reset_complete",
+      message: "Where I Am Now progress reset",
+    });
   } catch (error) {
     console.error("Reset Where I Am Now error:", error);
     return res.status(500).json({ message: "Internal Server Error" });

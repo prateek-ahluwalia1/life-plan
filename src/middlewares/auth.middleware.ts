@@ -5,6 +5,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
+    name?: string;
   };
 }
 
@@ -33,6 +34,7 @@ const authMiddleware = (
   try {
     const decoded = jwt.verify(token, secret) as JwtPayload & {
       email?: string;
+      name?: string;
     };
 
     if (!decoded.sub) {
@@ -43,6 +45,9 @@ const authMiddleware = (
       id: String(decoded.sub),
       email: decoded.email || "",
     };
+    if (decoded.name) {
+      req.user.name = decoded.name;
+    }
 
     next();
   } catch (error) {

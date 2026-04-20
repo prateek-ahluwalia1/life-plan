@@ -21,7 +21,7 @@ export const getAIGettingStartedQuestions = async (
 ) => {
   try {
     const userId = req.user?.id;
-    const userName = req.user?.email?.split("@")[0] || "Friend";
+    const userName = req.user?.name || req.user?.email?.split("@")[0] || "Friend";
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -61,6 +61,7 @@ export const getAIGettingStartedFollowUp = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userName = req.user?.name || req.user?.email?.split("@")[0] || "Friend";
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -77,7 +78,8 @@ export const getAIGettingStartedFollowUp = async (
     const followupQuestions = await generateDomainFollowUpQuestions(
       domain,
       examples || [],
-      userContext
+      userContext,
+      userName // Pass user name for personalization
     );
 
     return res.status(200).json({
@@ -107,7 +109,7 @@ export const getAIWhereIAmNowQuestions = async (
 ) => {
   try {
     const userId = req.user?.id;
-    const userName = req.user?.email?.split("@")[0] || "Friend";
+    const userName = req.user?.name || req.user?.email?.split("@")[0] || "Friend";
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -146,6 +148,7 @@ export const getAIWhereIAmNowFollowUp = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userName = req.user?.name || req.user?.email?.split("@")[0] || "Friend";
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -162,7 +165,9 @@ export const getAIWhereIAmNowFollowUp = async (
     const followUp = await generateContextualFollowUp(
       domain,
       userResponse,
-      assessmentType as "right" | "wrong" | "confused" | "missing"
+      assessmentType as "right" | "wrong" | "confused" | "missing",
+      undefined, // followUpCount
+      userName // Pass user's name for personalization
     );
 
     return res.status(200).json({

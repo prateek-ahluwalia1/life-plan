@@ -2,6 +2,10 @@ import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import LifePlanModules from "../models/lifePlanModules.model";
 import { buildModulePdf } from "../services/pdf.service";
+import {
+  createConfirmationToken,
+  verifyConfirmationToken,
+} from "../services/confirmationService";
 import type {
   LifePlanModulesPayload,
   LifePlanProgress,
@@ -262,12 +266,39 @@ const resetLifePlanModules = async (
   res: Response,
 ) => {
   try {
-    if (!req.user?.id) {
+    const userId = req.user?.id;
+
+    if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    await LifePlanModules.findOneAndDelete({ userId: req.user.id });
-    return res.status(200).json({ message: "LifePlan module state reset" });
+    const { confirmationId } = req.body as { confirmationId?: string };
+
+    // If no confirmationId provided, generate one and request confirmation
+    if (!confirmationId) {
+      const newConfirmationId = createConfirmationToken(userId, "reset_lifeplan");
+      return res.status(200).json({
+        status: "confirmation_required",
+        confirmationId: newConfirmationId,
+        message: "Please confirm module restart",
+      });
+    }
+
+    // Verify confirmation token
+    const isValid = verifyConfirmationToken(confirmationId, userId, "reset_lifeplan");
+    if (!isValid) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid or expired confirmation ID",
+      });
+    }
+
+    // Token is valid, proceed with reset
+    await LifePlanModules.findOneAndDelete({ userId });
+    return res.status(200).json({
+      status: "reset_complete",
+      message: "LifePlan modules reset",
+    });
   } catch (error) {
     console.error("Reset LifePlan modules error:", error);
     return res.status(500).json({ message: "Internal Server Error" });

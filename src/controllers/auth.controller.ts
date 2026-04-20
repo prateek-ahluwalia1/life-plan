@@ -32,9 +32,9 @@ const googleClient = new OAuth2Client(String(process.env.GOOGLE_CLIENT_ID));
 
 const sanitizeEmail = (email: string): string => email.trim().toLowerCase();
 
-const buildUserData = (id: string, email: string) => ({
+const buildUserData = (id: string, email: string, name?: string) => ({
   id,
-  name: email.split("@")[0],
+  name: name || email.split("@")[0],
   email,
 });
 
@@ -180,17 +180,22 @@ const login = async (req: Request, res: Response) => {
         .json({ message: "Please verify your email first" });
     }
 
-    const token = createJwtToken({
+    const tokenPayload: { userId: string; email: string; name?: string } = {
       userId: String(user._id),
       email: user.email,
-    });
+    };
+    if (user.name) {
+      tokenPayload.name = user.name;
+    }
+
+    const token = createJwtToken(tokenPayload);
 
     res.status(200).json({
       message: "Login successful",
       token,
       userdata: {
         id: user._id,
-        name: user.email.split("@")[0],
+        name: user.name || user.email.split("@")[0],
         email: user.email,
       },
     });
@@ -459,15 +464,20 @@ const googleLogin = async (req: Request, res: Response) => {
       );
     }
 
-    const token = createJwtToken({
+    const tokenPayload: { userId: string; email: string; name?: string } = {
       userId: String(user._id),
       email: user.email,
-    });
+    };
+    if (user.name) {
+      tokenPayload.name = user.name;
+    }
+
+    const token = createJwtToken(tokenPayload);
 
     return res.status(200).json({
       message: "Login successful",
       token,
-      userdata: buildUserData(String(user._id), user.email),
+      userdata: buildUserData(String(user._id), user.email, user.name),
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal Server Error", error });

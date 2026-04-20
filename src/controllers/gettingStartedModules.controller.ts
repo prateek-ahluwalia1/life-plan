@@ -6,6 +6,10 @@ import type {
 } from "../types/gettingStartedModules";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import { buildModulePdf } from "../services/pdf.service";
+import {
+  createConfirmationToken,
+  verifyConfirmationToken,
+} from "../services/confirmationService";
 
 const createEmptyProgress = (): GettingStartedProgress => ({
   overallGoalComplete: false,
@@ -214,13 +218,39 @@ const resetGettingStartedModules = async (
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    const { confirmationId } = req.body as { confirmationId?: string };
+
+    // If no confirmationId provided, generate one and request confirmation
+    if (!confirmationId) {
+      const newConfirmationId = createConfirmationToken(userId, "reset_getting_started");
+      return res.status(200).json({
+        status: "confirmation_required",
+        confirmationId: newConfirmationId,
+        message: "Please confirm module restart",
+      });
+    }
+
+    // Verify confirmation token
+    const isValid = verifyConfirmationToken(confirmationId, userId, "reset_getting_started");
+    if (!isValid) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid or expired confirmation ID",
+      });
+    }
+
+    // Token is valid, proceed with reset
     await GettingStartedModules.findOneAndDelete({ userId });
 
     const initialPayload = createInitialPayload();
     const newDoc = new GettingStartedModules({ userId, ...initialPayload });
     await newDoc.save();
 
-    return res.status(200).json(initialPayload);
+    return res.status(200).json({
+      status: "reset_complete",
+      message: "Getting Started module reset",
+      data: initialPayload,
+    });
   } catch (error) {
     console.error("Reset Getting Started Modules error:", error);
     return res.status(500).json({ error: "Failed to reset module" });

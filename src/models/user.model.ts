@@ -2,6 +2,7 @@ import mongoose, { Document, model, Schema } from "mongoose";
 
 export interface IUser extends Document {
   email: string;
+  name?: string;
   password?: string;
   googleId?: string;
   isVerified: boolean;
@@ -19,6 +20,10 @@ const userSchema: Schema<IUser> = new Schema<IUser>(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
+    },
+    name: {
+      type: String,
       trim: true,
     },
     googleId: {

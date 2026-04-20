@@ -36,6 +36,7 @@ export const generateResetToken = (): {
 export const createJwtToken = (payload: {
   userId: string;
   email: string;
+  name?: string;
 }): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -46,9 +47,15 @@ export const createJwtToken = (payload: {
     SignOptions["expiresIn"]
   >;
 
-  return jwt.sign({ sub: payload.userId, email: payload.email }, secret, {
-    expiresIn,
-  });
+  return jwt.sign(
+    { 
+      sub: payload.userId, 
+      email: payload.email,
+      name: payload.name 
+    }, 
+    secret,
+    { expiresIn },
+  );
 };
 
 export const isStrongPassword = (password: string): boolean => {
