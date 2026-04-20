@@ -8,7 +8,6 @@ import type { RootState } from "../store/store";
 import {
   apiURL,
   downloadModulePdfFromServer,
-  saveLifePlanDeliverablesToServer,
 } from "../utils/exports";
 
 type LifePlanProgress = {
@@ -22,23 +21,6 @@ const JourneyComplete = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [deliverables, setDeliverables] = useState({
-    missionStatement: "",
-    visionStatement: "",
-    actionPlan: "",
-  });
-  const [draftDeliverables, setDraftDeliverables] = useState({
-    missionStatement: "",
-    visionStatement: "",
-    actionPlan: "",
-  });
-  const [saveStateByKey, setSaveStateByKey] = useState<
-    Record<"missionStatement" | "visionStatement" | "actionPlan", string>
-  >({
-    missionStatement: "",
-    visionStatement: "",
-    actionPlan: "",
-  });
   const [progress, setProgress] = useState<LifePlanProgress>({});
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
@@ -88,9 +70,6 @@ const JourneyComplete = () => {
         const json = (await response.json()) as {
           data?: {
             progress?: LifePlanProgress;
-            missionStatement?: string;
-            visionStatement?: string;
-            actionPlan?: string;
           };
         };
 
@@ -101,17 +80,6 @@ const JourneyComplete = () => {
         if (json.data.progress) {
           setProgress(json.data.progress);
         }
-
-        setDeliverables({
-          missionStatement: json.data.missionStatement || "",
-          visionStatement: json.data.visionStatement || "",
-          actionPlan: json.data.actionPlan || "",
-        });
-        setDraftDeliverables({
-          missionStatement: json.data.missionStatement || "",
-          visionStatement: json.data.visionStatement || "",
-          actionPlan: json.data.actionPlan || "",
-        });
       } catch {
         // Keep local fallback if backend is unavailable
       }
@@ -158,64 +126,6 @@ const JourneyComplete = () => {
     dispatch(logout());
     setIsProfileMenuOpen(false);
     navigate("/");
-  };
-
-  const downloadDeliverablePdf = (
-    document: "mission" | "vision" | "action",
-  ) => {
-    if (!token) {
-      return;
-    }
-
-    void downloadModulePdfFromServer(
-      token,
-      `modules/life-plan-modules/pdf/${document}`,
-      `${document}-statement.pdf`,
-    );
-  };
-
-  const downloadAllDeliverables = () => {
-    if (!token) {
-      return;
-    }
-
-    downloadDeliverablePdf("mission");
-    const timeout1 = setTimeout(() => downloadDeliverablePdf("vision"), 250);
-    const timeout2 = setTimeout(() => downloadDeliverablePdf("action"), 500);
-    
-    timeoutIdsRef.current.push(timeout1, timeout2);
-  };
-
-  const saveDeliverableField = async (
-    key: "missionStatement" | "visionStatement" | "actionPlan",
-  ) => {
-    if (!token) {
-      return;
-    }
-
-    setSaveStateByKey((prev) => ({ ...prev, [key]: "Saving..." }));
-
-    const cleaned = draftDeliverables[key].trim();
-    const ok = await saveLifePlanDeliverablesToServer(token, {
-      [key]: cleaned,
-    });
-
-    if (!ok) {
-      setSaveStateByKey((prev) => ({ ...prev, [key]: "Save failed" }));
-      return;
-    }
-
-    setDeliverables((prev) => ({ ...prev, [key]: cleaned }));
-    setSaveStateByKey((prev) => ({ ...prev, [key]: "Saved" }));
-
-    const timeoutId = setTimeout(() => {
-      setSaveStateByKey((prev) => ({
-        ...prev,
-        [key]: prev[key] === "Saved" ? "" : prev[key],
-      }));
-    }, 1800);
-    
-    timeoutIdsRef.current.push(timeoutId);
   };
 
   return (
@@ -414,119 +324,354 @@ const JourneyComplete = () => {
             </div>
           )}
 
-          {/* DELIVERABLES */}
-          <div className={styles["deliverables-section"]}>
-            <div className={styles["section-header"]}>
+          {/* MODULE REPORTS CARDS */}
+          <div className={styles["modules-reports-section"]} style={{
+            marginBottom: "48px",
+          }}>
+            <div className={styles["section-header"]} style={{
+              marginBottom: "32px",
+            }}>
               <div>
                 <div className={styles["section-title"]}>
-                  Your Three Deliverables
+                  Your Module Reports
                 </div>
                 <div className={styles["section-sub"]}>
-                  Not aspirational. Not generic. Uniquely yours — the lived
-                  expression of an integrated, wholehearted life.
+                  Download detailed reports from each completed module. All your reflections and assessments in one place.
                 </div>
               </div>
-              <button
-                className={styles["btn-download-all"]}
-                onClick={downloadAllDeliverables}
-                type="button"
-              >
-                ⬇ Download All 3 PDFs
-              </button>
             </div>
 
             <div className={styles["deliverables-grid"]}>
-              {[
-                {
-                  id: 1,
-                  title: "Personal Mission Statement",
-                  icon: "fa-quote-left",
-                  pdfKey: "mission" as const,
-                  fieldKey: "missionStatement" as const,
-                  text:
-                    deliverables.missionStatement ||
-                    "No mission statement has been saved yet.",
-                },
-                {
-                  id: 2,
-                  title: "Vision Statement",
-                  icon: "fa-eye",
-                  pdfKey: "vision" as const,
-                  fieldKey: "visionStatement" as const,
-                  text:
-                    deliverables.visionStatement ||
-                    "No vision statement has been saved yet.",
-                },
-                {
-                  id: 3,
-                  title: "Purpose-Aligned Action Plan",
-                  icon: "fa-list-ul",
-                  pdfKey: "action" as const,
-                  fieldKey: "actionPlan" as const,
-                  text:
-                    deliverables.actionPlan ||
-                    "No action plan has been saved yet.",
-                },
-              ].map((doc) => (
-                <div className={styles["doc-card"]} key={doc.id}>
-                  <div
-                    className={`${styles["dc-head"]} ${styles[`dc${doc.id}-head`]}`}
-                  >
-                    <div className={styles["dc-icon"]}>
-                      <i
-                        className={`fa ${doc.icon}`}
-                        style={{ color: "#5ddb8e" }}
-                      ></i>
-                    </div>
-                    <div className={styles["dc-label"]}>Document {doc.id}</div>
-                    <div className={styles["dc-title"]}>{doc.title}</div>
+              {/* Getting Started Module */}
+              <div className={styles["doc-card"]} style={{
+                backgroundColor: "rgba(147, 97, 254, 0.1)",
+                borderTop: "3px solid rgba(147, 97, 254, 0.5)",
+              }}>
+                <div className={`${styles["dc-head"]}`} style={{
+                  background: "linear-gradient(135deg, rgba(147, 97, 254, 0.3), rgba(168, 85, 247, 0.2))",
+                }}>
+                  <div className={styles["dc-icon"]}>
+                    <i className="fa fa-rocket" style={{ color: "#a855f7" }}></i>
                   </div>
-                  <div className={styles["dc-body"]}>
-                    <div className={styles["dc-preview"]}>"{doc.text}"</div>
-                    <textarea
-                      value={draftDeliverables[doc.fieldKey]}
-                      onChange={(event) =>
-                        setDraftDeliverables((prev) => ({
-                          ...prev,
-                          [doc.fieldKey]: event.target.value,
-                        }))
-                      }
-                      placeholder={`Write or edit your ${doc.title.toLowerCase()} here...`}
+                  <div className={styles["dc-label"]}>Module 1</div>
+                  <div className={styles["dc-title"]}>Getting Started</div>
+                </div>
+                <div className={styles["dc-body"]}>
+                  <div className={styles["dc-preview"]}>
+                    "Your life goals and domains summary from the Getting Started reflection."
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    justifyContent: "space-between",
+                  }}>
+                    <button
+                      className={styles["dc-btn-view"]}
                       style={{
-                        width: "100%",
-                        minHeight: "96px",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        background: "rgba(8,10,15,0.35)",
-                        color: "#e8edf4",
-                        padding: "10px 12px",
-                        marginBottom: "10px",
-                        fontSize: "0.88rem",
-                        resize: "vertical",
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "transparent",
+                        color: "#a855f7",
+                        border: "1px solid rgba(168, 85, 247, 0.3)",
+                        borderRadius: "6px",
+                        cursor: "default",
+                        fontSize: "12px",
                       }}
-                    />
-                    <div className={styles["dc-actions"]}>
-                      <button
-                        className={styles["dc-btn-view"]}
-                        onClick={() => saveDeliverableField(doc.fieldKey)}
-                        type="button"
-                      >
-                        Save
-                      </button>
-                      <button
-                        className={styles["dc-btn-dl"]}
-                        onClick={() => downloadDeliverablePdf(doc.pdfKey)}
-                        type="button"
-                      >
-                        ⬇ PDF
-                      </button>
-                      <button className={styles["dc-btn-view"]} type="button">
-                        {saveStateByKey[doc.fieldKey] || "Ready"}
-                      </button>
-                    </div>
+                      type="button"
+                    >
+                      ✓ Completed
+                    </button>
+                    <button
+                      className={styles["dc-btn-dl"]}
+                      onClick={() => token && downloadModulePdfFromServer(token, "modules/getting-started-modules/pdf", "getting-started-goals.pdf")}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "rgba(168, 85, 247, 0.3)",
+                        color: "white",
+                        border: "1px solid rgba(168, 85, 247, 0.5)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(168, 85, 247, 0.5)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(168, 85, 247, 0.3)";
+                      }}
+                      type="button"
+                    >
+                      ⬇ Download PDF
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Current State Assessment Module */}
+              <div className={styles["doc-card"]} style={{
+                backgroundColor: progress.whereiam ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.05)",
+                borderTop: progress.whereiam ? "3px solid rgba(99, 102, 241, 0.5)" : "3px solid rgba(99, 102, 241, 0.2)",
+                opacity: progress.whereiam ? 1 : 0.6,
+              }}>
+                <div className={`${styles["dc-head"]}`} style={{
+                  background: progress.whereiam ? "linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.2))" : "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1))",
+                }}>
+                  <div className={styles["dc-icon"]}>
+                    <i className="fa fa-compass" style={{ color: progress.whereiam ? "#6366f1" : "#999" }}></i>
+                  </div>
+                  <div className={styles["dc-label"]}>Module 2</div>
+                  <div className={styles["dc-title"]}>Where I Am Now</div>
+                </div>
+                <div className={styles["dc-body"]}>
+                  <div className={styles["dc-preview"]}>
+                    "Your current state assessment across all five life domains — what's right, wrong, confused, and missing."
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    justifyContent: "space-between",
+                  }}>
+                    <button
+                      className={styles["dc-btn-view"]}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "transparent",
+                        color: progress.whereiam ? "#6366f1" : "#999",
+                        border: progress.whereiam ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid rgba(99, 102, 241, 0.15)",
+                        borderRadius: "6px",
+                        cursor: "default",
+                        fontSize: "12px",
+                      }}
+                      type="button"
+                    >
+                      {progress.whereiam ? "✓ Completed" : "○ Not Started"}
+                    </button>
+                    <button
+                      className={styles["dc-btn-dl"]}
+                      onClick={() => token && downloadModulePdfFromServer(token, "modules/where-i-am-now/pdf", "where-i-am-now.pdf")}
+                      disabled={!progress.whereiam}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: progress.whereiam ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.1)",
+                        color: progress.whereiam ? "white" : "rgba(255, 255, 255, 0.4)",
+                        border: progress.whereiam ? "1px solid rgba(99, 102, 241, 0.5)" : "1px solid rgba(99, 102, 241, 0.2)",
+                        borderRadius: "6px",
+                        cursor: progress.whereiam ? "pointer" : "not-allowed",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (progress.whereiam) {
+                          e.currentTarget.style.background = "rgba(99, 102, 241, 0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (progress.whereiam) {
+                          e.currentTarget.style.background = "rgba(99, 102, 241, 0.3)";
+                        }
+                      }}
+                      type="button"
+                    >
+                      ⬇ Download PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Perspective Module */}
+              <div className={styles["doc-card"]} style={{
+                backgroundColor: progress.perspective ? "rgba(139, 92, 246, 0.1)" : "rgba(139, 92, 246, 0.05)",
+                borderTop: progress.perspective ? "3px solid rgba(139, 92, 246, 0.5)" : "3px solid rgba(139, 92, 246, 0.2)",
+                opacity: progress.perspective ? 1 : 0.6,
+              }}>
+                <div className={`${styles["dc-head"]}`} style={{
+                  background: progress.perspective ? "linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(124, 58, 255, 0.2))" : "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 255, 0.1))",
+                }}>
+                  <div className={styles["dc-icon"]}>
+                    <i className="fa fa-binoculars" style={{ color: progress.perspective ? "#8b5cf6" : "#999" }}></i>
+                  </div>
+                  <div className={styles["dc-label"]}>Module 3</div>
+                  <div className={styles["dc-title"]}>Perspective</div>
+                </div>
+                <div className={styles["dc-body"]}>
+                  <div className={styles["dc-preview"]}>
+                    "Your reflections on how you got here and the perspective that shapes your path forward."
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    justifyContent: "space-between",
+                  }}>
+                    <button
+                      className={styles["dc-btn-view"]}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "transparent",
+                        color: progress.perspective ? "#8b5cf6" : "#999",
+                        border: progress.perspective ? "1px solid rgba(139, 92, 246, 0.3)" : "1px solid rgba(139, 92, 246, 0.15)",
+                        borderRadius: "6px",
+                        cursor: "default",
+                        fontSize: "12px",
+                      }}
+                      type="button"
+                    >
+                      {progress.perspective ? "✓ Completed" : "○ Not Started"}
+                    </button>
+                    <button
+                      className={styles["dc-btn-dl"]}
+                      disabled={!progress.perspective}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: progress.perspective ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.1)",
+                        color: progress.perspective ? "white" : "rgba(255, 255, 255, 0.4)",
+                        border: progress.perspective ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(139, 92, 246, 0.2)",
+                        borderRadius: "6px",
+                        cursor: progress.perspective ? "pointer" : "not-allowed",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                      }}
+                      type="button"
+                    >
+                      ⬇ Coming Soon
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Surrender Module */}
+              <div className={styles["doc-card"]} style={{
+                backgroundColor: progress.surrender ? "rgba(244, 114, 182, 0.1)" : "rgba(244, 114, 182, 0.05)",
+                borderTop: progress.surrender ? "3px solid rgba(244, 114, 182, 0.5)" : "3px solid rgba(244, 114, 182, 0.2)",
+                opacity: progress.surrender ? 1 : 0.6,
+              }}>
+                <div className={`${styles["dc-head"]}`} style={{
+                  background: progress.surrender ? "linear-gradient(135deg, rgba(244, 114, 182, 0.3), rgba(236, 72, 153, 0.2))" : "linear-gradient(135deg, rgba(244, 114, 182, 0.15), rgba(236, 72, 153, 0.1))",
+                }}>
+                  <div className={styles["dc-icon"]}>
+                    <i className="fa fa-dove" style={{ color: progress.surrender ? "#f472b6" : "#999" }}></i>
+                  </div>
+                  <div className={styles["dc-label"]}>Module 4</div>
+                  <div className={styles["dc-title"]}>Surrender</div>
+                </div>
+                <div className={styles["dc-body"]}>
+                  <div className={styles["dc-preview"]}>
+                    "What you're releasing and trusting to move forward in faith."
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    justifyContent: "space-between",
+                  }}>
+                    <button
+                      className={styles["dc-btn-view"]}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "transparent",
+                        color: progress.surrender ? "#f472b6" : "#999",
+                        border: progress.surrender ? "1px solid rgba(244, 114, 182, 0.3)" : "1px solid rgba(244, 114, 182, 0.15)",
+                        borderRadius: "6px",
+                        cursor: "default",
+                        fontSize: "12px",
+                      }}
+                      type="button"
+                    >
+                      {progress.surrender ? "✓ Completed" : "○ Not Started"}
+                    </button>
+                    <button
+                      className={styles["dc-btn-dl"]}
+                      disabled={!progress.surrender}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: progress.surrender ? "rgba(244, 114, 182, 0.3)" : "rgba(244, 114, 182, 0.1)",
+                        color: progress.surrender ? "white" : "rgba(255, 255, 255, 0.4)",
+                        border: progress.surrender ? "1px solid rgba(244, 114, 182, 0.5)" : "1px solid rgba(244, 114, 182, 0.2)",
+                        borderRadius: "6px",
+                        cursor: progress.surrender ? "pointer" : "not-allowed",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                      }}
+                      type="button"
+                    >
+                      ⬇ Coming Soon
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* My Purpose Module */}
+              <div className={styles["doc-card"]} style={{
+                backgroundColor: progress.mypurpose ? "rgba(34, 197, 94, 0.1)" : "rgba(34, 197, 94, 0.05)",
+                borderTop: progress.mypurpose ? "3px solid rgba(34, 197, 94, 0.5)" : "3px solid rgba(34, 197, 94, 0.2)",
+                opacity: progress.mypurpose ? 1 : 0.6,
+              }}>
+                <div className={`${styles["dc-head"]}`} style={{
+                  background: progress.mypurpose ? "linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.2))" : "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1))",
+                }}>
+                  <div className={styles["dc-icon"]}>
+                    <i className="fa fa-star" style={{ color: progress.mypurpose ? "#22c55e" : "#999" }}></i>
+                  </div>
+                  <div className={styles["dc-label"]}>Module 5</div>
+                  <div className={styles["dc-title"]}>My Purpose</div>
+                </div>
+                <div className={styles["dc-body"]}>
+                  <div className={styles["dc-preview"]}>
+                    "Your personal mission, vision, and purpose-aligned action plan."
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                    justifyContent: "space-between",
+                  }}>
+                    <button
+                      className={styles["dc-btn-view"]}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: "transparent",
+                        color: progress.mypurpose ? "#22c55e" : "#999",
+                        border: progress.mypurpose ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid rgba(34, 197, 94, 0.15)",
+                        borderRadius: "6px",
+                        cursor: "default",
+                        fontSize: "12px",
+                      }}
+                      type="button"
+                    >
+                      {progress.mypurpose ? "✓ Completed" : "○ Not Started"}
+                    </button>
+                    <button
+                      className={styles["dc-btn-dl"]}
+                      disabled={!progress.mypurpose}
+                      style={{
+                        flex: 1,
+                        padding: "10px 16px",
+                        background: progress.mypurpose ? "rgba(34, 197, 94, 0.3)" : "rgba(34, 197, 94, 0.1)",
+                        color: progress.mypurpose ? "white" : "rgba(255, 255, 255, 0.4)",
+                        border: progress.mypurpose ? "1px solid rgba(34, 197, 94, 0.5)" : "1px solid rgba(34, 197, 94, 0.2)",
+                        borderRadius: "6px",
+                        cursor: progress.mypurpose ? "pointer" : "not-allowed",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                      }}
+                      type="button"
+                    >
+                      ⬇ Coming Soon
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
