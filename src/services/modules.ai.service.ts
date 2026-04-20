@@ -1,11 +1,8 @@
 import { openai } from "../config/openai";
 import type { 
-  GettingStartedProgress,
   GettingStartedModulesPayload,
 } from "../types/gettingStartedModules";
 import type { WhereIAmNowPayload } from "../types/whereIAmNow";
-
-// ==================== TYPES ====================
 
 interface AIQuestion {
   id: string;
@@ -16,27 +13,13 @@ interface AIQuestion {
   examples: string[];
 }
 
-interface AIQuestionBatch {
-  moduleId: string;
-  stage: number;
-  questions: AIQuestion[];
-  generatedAt: Date;
-  cachedUntil: Date;
-}
 
-// ==================== VALIDATION ====================
-
-/**
- * Validates and sanitizes AI response JSON
- * Ensures responses match expected schema before using them
- */
 const validateAIResponse = <T>(
   data: unknown,
   expectedType: "question-array" | "question-object" | "string"
 ): T | null => {
   try {
     if (expectedType === "question-array" && Array.isArray(data)) {
-      // Validate question array
       const questions = data as any[];
       return questions.every(
         (q) =>
@@ -47,7 +30,6 @@ const validateAIResponse = <T>(
     }
 
     if (expectedType === "question-object" && typeof data === "object" && data !== null) {
-      // Validate question object (domains with arrays)
       const obj = data as Record<string, any>;
       const domains = ["personal", "family", "church", "vocation", "community"];
       return domains.every((domain) => Array.isArray(obj[domain]))
@@ -64,10 +46,6 @@ const validateAIResponse = <T>(
     return null;
   }
 };
-
-/**
- * Safe JSON parse with fallback
- */
 const safeJsonParse = (content: string): unknown => {
   try {
     return JSON.parse(content);
@@ -77,24 +55,12 @@ const safeJsonParse = (content: string): unknown => {
   }
 };
 
-// ==================== GETTING STARTED MODULE ====================
-
-/**
- * Generate personalized getting started questions based on user context
- * SPECIFICATION-ALIGNED: Uses exact wording, formatting, and structure from LifePlan Getting Started spec
- */
 export const generateGettingStartedQuestions = async (
   userName: string,
-  userEmail: string,
-  existingData?: Partial<GettingStartedModulesPayload>
 ): Promise<AIQuestion[]> => {
-  // Use first name from email or userName - outside try block so it's available everywhere
   const firstName = userName.split(" ")[0] || userName.split("@")[0] || "Friend";
   
   try {
-    // NEW APPROACH: Generate content for each domain separately, then construct the JSON ourselves
-    // This guarantees correct domain IDs and structure
-    
     const domains = [
       { id: "personal", label: "Personal", context: "physical health, emotional wellbeing, intellectual growth, and spiritual life" },
       { id: "family", label: "Family & Friends", context: "spouse, children, parents, extended family, and close friends" },
@@ -123,8 +89,6 @@ REQUIRED JSON FORMAT:
 Return ONLY valid JSON. No explanations, no extra text.`;
 
     const questions: AIQuestion[] = [];
-
-    // Generate a question for each domain
     for (const domain of domains) {
       const userContext = `Generate a getting started question for the "${domain.label}" domain (${domain.context}). 
 The user is: ${firstName}
@@ -136,7 +100,7 @@ Remember: Start the question with "${firstName}, "`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userContext },
         ],
-        temperature: 0.3, // Low temperature for consistency
+        temperature: 0.3,
         max_tokens: 500,
       });
 
@@ -151,7 +115,7 @@ Remember: Start the question with "${firstName}, "`;
       if (parsed?.question && parsed?.prompt && parsed?.examples) {
         questions.push({
           id: domain.id,
-          domain: domain.id, // GUARANTEE correct domain ID
+          domain: domain.id,
           question: parsed.question,
           prompt: parsed.prompt,
           guidance: parsed.guidance || "Reflect honestly on your situation.",
@@ -160,7 +124,6 @@ Remember: Start the question with "${firstName}, "`;
         console.log(`[generateGettingStartedQuestions] Generated question for domain: ${domain.id}`);
       } else {
         console.warn(`[generateGettingStartedQuestions] Failed to parse response for domain: ${domain.id}, using fallback`);
-        // Use fallback for this domain
         const fallback = getGettingStartedFallbackQuestions(firstName);
         const fallbackForDomain = fallback.find((q) => q.domain === domain.id);
         if (fallbackForDomain) {
@@ -168,8 +131,6 @@ Remember: Start the question with "${firstName}, "`;
         }
       }
     }
-
-    // Ensure we have exactly 5 questions with correct domains
     if (questions.length === 5) {
       console.log("[generateGettingStartedQuestions] Successfully generated all 5 domain questions");
       return questions;
@@ -183,11 +144,6 @@ Remember: Start the question with "${firstName}, "`;
   }
 };
 
-/**
- * Generate follow-up questions for domain goals
- * SPECIFICATION-ALIGNED: Helps users refine and clarify their domain-specific goals
- * PERSONALIZATION: Uses user's name to build connection
- */
 export const generateDomainFollowUpQuestions = async (
   domainName: string,
   domainExamples: string[],
@@ -280,14 +236,6 @@ Generate 2-3 clarifying follow-up questions that help them refine their thinking
     return [];
   }
 };
-
-// ==================== WHERE I AM NOW MODULE ====================
-
-/**
- * Generate personalized assessment questions for the Where I Am Now module
- * SPECIFICATION-ALIGNED: Enforces exact 4-column assessment (Right/Wrong/Confused/Missing)
- * DETERMINISTIC: Does not create new questions, only provides context-specific prompts
- */
 export const generateWhereIAmNowQuestions = async (
   userName: string,
   previousAnswers?: Partial<WhereIAmNowPayload>
@@ -404,8 +352,6 @@ The prompts should feel safe, inviting, and honest—helping them assess where t
     if (validated) {
       return validated;
     }
-
-    // If validation failed, use fallback
     return getWhereIAmNowFallbackQuestions();
   } catch (error) {
     console.error("Generate Where I Am Now questions error:", error);
@@ -413,12 +359,6 @@ The prompts should feel safe, inviting, and honest—helping them assess where t
   }
 };
 
-/**
- * Generate contextual follow-up for a specific response
- * SPECIFICATION-ALIGNED: Max 1-2 follow-ups per response, always reflective not diagnostic
- * CONSTRAINTS: Single question only, no advice, no solutions, validation before use
- * PERSONALIZATION: Uses user's name to build connection and warmth
- */
 export const generateContextualFollowUp = async (
   domain: string,
   userResponse: string,
@@ -427,12 +367,11 @@ export const generateContextualFollowUp = async (
   userName?: string
 ): Promise<string> => {
   try {
-    // HARD LIMIT: Enforce max 2 follow-ups (no exceptions)
     if (followUpCount >= 2) {
       console.log(
         `[generateContextualFollowUp] Max follow-ups reached (count=${followUpCount}) for ${domain}/${assessmentType}`
       );
-      return ""; // Return empty string - no more follow-ups allowed
+      return ""; 
     }
 
     const systemPrompt = `SYSTEM ROLE: You provide warm, reflective follow-up guidance.
@@ -517,11 +456,6 @@ EXAMPLE WITH NAME:
   }
 };
 
-// ==================== FALLBACK QUESTIONS ====================
-
-/**
- * Fallback questions for Getting Started (if AI generation fails)
- */
 function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQuestion[] {
   const firstName = userName.split(" ")[0] || userName || "Friend";
   
@@ -589,9 +523,6 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
   ];
 }
 
-/**
- * Fallback questions for Where I Am Now (if AI generation fails)
- */
 function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
   return {
     personal: [
