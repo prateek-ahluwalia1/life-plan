@@ -1,5 +1,5 @@
 import { openai } from "../config/openai";
-import type { 
+import type {
   GettingStartedModulesPayload,
 } from "../types/gettingStartedModules";
 import type { WhereIAmNowPayload } from "../types/whereIAmNow";
@@ -46,6 +46,7 @@ const validateAIResponse = <T>(
     return null;
   }
 };
+
 const safeJsonParse = (content: string): unknown => {
   try {
     return JSON.parse(content);
@@ -59,7 +60,7 @@ export const generateGettingStartedQuestions = async (
   userName: string,
 ): Promise<AIQuestion[]> => {
   const firstName = userName.split(" ")[0] || userName.split("@")[0] || "Friend";
-  
+
   try {
     const domains = [
       { id: "personal", label: "Personal", context: "physical health, emotional wellbeing, intellectual growth, and spiritual life" },
@@ -71,8 +72,15 @@ export const generateGettingStartedQuestions = async (
 
     const systemPrompt = `You are a thoughtful guide helping people reflect on their life goals. Generate a thoughtful, personalized question for ONE specific life domain.
 
-CRITICAL REQUIREMENTS:
-✅ The question MUST start with "${firstName}, " 
+CRITICAL NAME PLACEMENT RULES:
+❌ FORBIDDEN: You must NEVER start the question with the user's name. Do NOT write "${firstName}, [question]".
+✅ REQUIRED: You must place the name in the MIDDLE or at the END of the question.
+
+EXAMPLES OF REQUIRED FORMAT:
+- "What steps can you take to improve your physical health, ${firstName}?" (Name at end)
+- "When you think about your spiritual life, ${firstName}, what does thriving look like?" (Name in middle)
+
+OTHER REQUIREMENTS:
 ✅ The question must be warm, open-ended, and inviting
 ✅ Include a brief prompt (1-2 sentences explaining what to reflect on)
 ✅ Include guidance (1 sentence on how to approach the reflection)
@@ -80,7 +88,7 @@ CRITICAL REQUIREMENTS:
 
 REQUIRED JSON FORMAT:
 {
-  "question": "${firstName}, [your question here]",
+  "question": "[your question here, strictly following the name placement rules above]",
   "prompt": "Brief explanation of what to consider",
   "guidance": "How to approach this reflection",
   "examples": ["Example 1", "Example 2", "Example 3", "Example 4"]
@@ -92,7 +100,7 @@ Return ONLY valid JSON. No explanations, no extra text.`;
     for (const domain of domains) {
       const userContext = `Generate a getting started question for the "${domain.label}" domain (${domain.context}). 
 The user is: ${firstName}
-Remember: Start the question with "${firstName}, "`;
+Remember: NEVER start the question with their name. Put it in the middle or at the end.`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4",
@@ -100,7 +108,7 @@ Remember: Start the question with "${firstName}, "`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userContext },
         ],
-        temperature: 0.3,
+        temperature: 0.6,
         max_tokens: 500,
       });
 
@@ -155,59 +163,41 @@ export const generateDomainFollowUpQuestions = async (
 
 PURPOSE: Generate 2-3 follow-up questions that help them move from general to specific.
 
-PERSONALIZATION (MANDATORY - EVERY QUESTION MUST INCLUDE THE USER'S NAME):
-✅ REQUIRED: Start EVERY question with the user's name: "${userName}"
-✅ Examples of CORRECT format:
-   - "${userName}, what specifically would success look like in this domain?"
-   - "${userName}, what's one small shift that would move you closer?"
-   - "${userName}, what support or resources would help you here?"
-✅ The name makes exploration feel like a caring conversation, not an interview
+CRITICAL NAME PLACEMENT RULES (MANDATORY):
+❌ FORBIDDEN: You must NEVER start a question with the user's name. Never write "${userName}, [question]".
+✅ REQUIRED: You must place "${userName}" in the MIDDLE or at the END of EVERY question.
 
-⚠️ CRITICAL: If you generate questions without using "${userName}" at the start, you have FAILED the task.
-⚠️ EVERY SINGLE QUESTION must begin with: ${userName}, ...
+EXAMPLES OF CORRECT FORMAT:
+- "What specifically would success look like in this domain, ${userName}?" (Name at end)
+- "When you think about this, ${userName}, what's one small shift that would move you closer?" (Name in middle)
 
 TONE: Calm, warm, grounded, encouraging, non-judgmental
 - Normalize that clarifying takes time
 - Avoid pressure or urgency
 - Frame as exploration not achievement
-- Validate their thinking process
-- Use their name to show you care about their specific journey
 
 YOUR TASK: Generate 2-3 follow-up questions that:
-✅ ALWAYS include the user's name at the start
 ✅ Help them think more deeply about their domain goal
 ✅ Move from "what" to "why" (not why as therapy, but as clarification)
 ✅ Invite concrete, specific thinking
-✅ Respect where they are in the process
 
 CONSTRAINTS:
 ❌ Do NOT generate more than 3 questions
 ❌ Do NOT ask multiple questions in one prompt
 ❌ Do NOT prescribe or suggest solutions
-❌ Do NOT use pressuring language
 
 JSON FORMAT (REQUIRED):
 [
   {
     "id": "followup1",
     "domain": "${domainName}",
-    "question": "A specific, clarifying question",
+    "question": "A specific, clarifying question (with name at the middle or end)",
     "prompt": "The full question with context (1-2 sentences)",
     "guidance": "How to think about this (1 sentence)",
     "examples": ["Example response 1", "Example response 2"]
   },
   {...}
-]
-
-PROGRESSION EXAMPLE (WITH USER'S NAME - THIS IS THE PATTERN TO FOLLOW):
-1. Question: "${userName}, what specifically would 'success' look like in this domain?"
-   Prompt: "If you were thriving in this area, what would be true? What would be different?"
-   
-2. Question: "${userName}, what's one small shift that would move you closer?"
-   Prompt: "Not the whole transformation - just one meaningful step you could take..."
-   
-3. Question: "${userName}, what support or resources would help?"
-   Prompt: "What might enable this? Who could help? What do you need?"`;
+]`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4",
@@ -219,7 +209,7 @@ PROGRESSION EXAMPLE (WITH USER'S NAME - THIS IS THE PATTERN TO FOLLOW):
 Their response context: ${userContext}
 Domain examples they might relate to: ${domainExamples.join("; ")}
 
-Generate 2-3 clarifying follow-up questions that help them refine their thinking about their ${domainName} goal.`,
+Generate 2-3 clarifying follow-up questions. Remember: NEVER start the question with their name. Put it in the middle or at the end.`,
         },
       ],
       temperature: 0.8,
@@ -236,6 +226,7 @@ Generate 2-3 clarifying follow-up questions that help them refine their thinking
     return [];
   }
 };
+
 export const generateWhereIAmNowQuestions = async (
   userName: string,
   previousAnswers?: Partial<WhereIAmNowPayload>
@@ -243,32 +234,21 @@ export const generateWhereIAmNowQuestions = async (
   try {
     const systemPrompt = `SYSTEM ROLE: You facilitate a Current State Assessment using a deterministic 4-column framework.
 
-PERSONALIZATION (MANDATORY - EVERY PROMPT MUST INCLUDE THE USER'S NAME):
-✅ REQUIRED: Start EVERY prompt with the user's name: "${userName}"
-✅ Examples of CORRECT format:
-   - "${userName}, what in your personal life is going well right now?"
-   - "${userName}, where do you sense struggle or difficulty in your wellbeing?"
-   - "${userName}, what feels unclear in your personal growth?"
-   - "${userName}, what do you sense is absent or lacking in your personal life?"
-✅ The name creates safety and deepens the personal connection with reflection
-✅ Without the name, it feels clinical. With it, it feels like a caring conversation.
+CRITICAL NAME PLACEMENT RULES (MANDATORY):
+❌ FORBIDDEN: You must NEVER start a prompt with the user's name. Never write "${userName}, [prompt]".
+✅ REQUIRED: You must place "${userName}" in the MIDDLE or at the END of EVERY prompt.
 
-⚠️ CRITICAL: If you generate prompts without using "${userName}" at the start, you have FAILED the task.
-⚠️ EVERY SINGLE PROMPT must begin with: ${userName}, ...
+EXAMPLES OF CORRECT FORMAT:
+- "What in your personal life is going well right now, ${userName}?"
+- "When you think about your wellbeing, ${userName}, where do you sense struggle or difficulty?"
+- "What feels unclear in your personal growth, ${userName}?"
+- "If you step back and look at your personal life, ${userName}, what do you sense is lacking?"
 
 CRITICAL CONSTRAINTS:
-❌ You will NOT generate prompts WITHOUT the user's name
-❌ You will NOT generate new questions
-❌ You will NOT modify the assessment structure
-❌ You will NOT add additional assessment columns
+❌ You will NOT generate new questions or assessment columns
 ❌ You will NOT use diagnostic or clinical language
-
-✅ YOU WILL include the user's name in EVERY prompt
-✅ YOU WILL provide warm, reflective prompts aligned to the 4 core assessment types
 ✅ YOU WILL maintain the exact structure: right | wrong | confused | missing
-✅ YOU WILL respect the 5-domain order specified below
-✅ YOU WILL use encouraging, non-judgmental tone
-✅ YOU WILL use user's name to deepen personal connection
+✅ YOU WILL respect the 5-domain order
 
 THE DETERMINISTIC 4-ASSESSMENT FRAMEWORK (EXACT):
 1️⃣ Right: What IS working well? What's going right?
@@ -277,60 +257,31 @@ THE DETERMINISTIC 4-ASSESSMENT FRAMEWORK (EXACT):
 4️⃣ Missing: What is absent or lacking?
 
 DOMAINS (EXACT ORDER - DO NOT REORDER):
-1️⃣ Personal (physical health, emotional wellbeing, spiritual life, intellectual growth, self-awareness)
-2️⃣ Family & Friends (spouse, children, parents, extended family, close friendships, community relationships)
-3️⃣ Church & Kingdom (faith practice, ministry, calling, discipleship, contribution within body of Christ, spiritual community)
-4️⃣ Vocation (career, work, daily responsibilities, professional growth, sense of calling in work)
-5️⃣ Community (neighborhood, civic engagement, volunteer work, giving back, societal contribution)
-
-TONE REQUIREMENTS:
-- Calm and grounded (avoid urgency)
-- Warm and approachable (build psychological safety)
-- Non-judgmental and curious (no diagnosis or labels)
-- Encouraging yet honest (validate complexity)
-- Reflective not diagnostic (help them notice, not fix)
-
-YOUR TASK: For EACH of 5 domains, generate EXACTLY ONE prompt per assessment type.
-That means: 5 domains × 4 assessment types = 20 prompts total.
-
-Each prompt should:
-✅ Invite genuine reflection without judgment
-✅ Help user access specific memories or feelings
-✅ Validate that their honest assessment matters
-✅ Keep response open-ended
-✅ Use "what" questions rather than "why" questions
-
-EXAMPLE PROMPTS (GOOD - WITH USER'S NAME):
-- Right: "${userName}, what in your personal life is going well right now? What have you noticed working?"
-- Wrong: "${userName}, where do you sense struggle or difficulty in your personal wellbeing?"
-- Confused: "${userName}, what feels unclear or uncertain in how you're managing your personal growth?"
-- Missing: "${userName}, what do you sense is absent or lacking in your personal development?"
+1️⃣ Personal 
+2️⃣ Family & Friends 
+3️⃣ Church & Kingdom 
+4️⃣ Vocation 
+5️⃣ Community 
 
 JSON FORMAT (REQUIRED):
 {
   "personal": [
-    { "id": "p_right", "core": "right", "prompt": "Reflective prompt about what's RIGHT in personal domain (MUST include ${userName} at start)", "examples": [] },
-    { "id": "p_wrong", "core": "wrong", "prompt": "Reflective prompt about what's WRONG in personal domain (MUST include ${userName} at start)", "examples": [] },
-    { "id": "p_confused", "core": "confused", "prompt": "Reflective prompt about what's CONFUSED in personal domain (MUST include ${userName} at start)", "examples": [] },
-    { "id": "p_missing", "core": "missing", "prompt": "Reflective prompt about what's MISSING in personal domain (MUST include ${userName} at start)", "examples": [] }
+    { "id": "p_right", "core": "right", "prompt": "Prompt about what's RIGHT (name in middle or end)", "examples": [] },
+    { "id": "p_wrong", "core": "wrong", "prompt": "Prompt about what's WRONG (name in middle or end)", "examples": [] },
+    { "id": "p_confused", "core": "confused", "prompt": "Prompt about what's CONFUSED (name in middle or end)", "examples": [] },
+    { "id": "p_missing", "core": "missing", "prompt": "Prompt about what's MISSING (name in middle or end)", "examples": [] }
   ],
   "family": [...],
   "church": [...],
   "vocation": [...],
   "community": [...]
-}
-
-VALIDATION:
-- All 5 domains must be present
-- Each domain must have exactly 4 items (right, wrong, confused, missing)
-- All prompts must be reflective, not diagnostic
-- All prompts must encourage honest assessment`;
+}`;
 
     const userContext = `User: ${userName || "Friend"}
 ${previousAnswers?.analysis ? `Their previous reflection context: "${previousAnswers.analysis}"` : "This is their first current state assessment"}
 
 Generate assessment prompts for all 5 domains using the deterministic framework.
-The prompts should feel safe, inviting, and honest—helping them assess where they truly are without judgment.`;
+Remember: NEVER start the prompt with their name. Put it in the middle or at the end.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4",
@@ -352,10 +303,10 @@ The prompts should feel safe, inviting, and honest—helping them assess where t
     if (validated) {
       return validated;
     }
-    return getWhereIAmNowFallbackQuestions();
+    return getWhereIAmNowFallbackQuestions(userName);
   } catch (error) {
     console.error("Generate Where I Am Now questions error:", error);
-    return getWhereIAmNowFallbackQuestions();
+    return getWhereIAmNowFallbackQuestions(userName);
   }
 };
 
@@ -371,67 +322,38 @@ export const generateContextualFollowUp = async (
       console.log(
         `[generateContextualFollowUp] Max follow-ups reached (count=${followUpCount}) for ${domain}/${assessmentType}`
       );
-      return ""; 
+      return "";
     }
 
     const systemPrompt = `SYSTEM ROLE: You provide warm, reflective follow-up guidance.
 PURPOSE: Deepen their reflection without prescribing solutions
 
-TONE (CRITICAL):
-- Calm and grounded
-- Encouraging yet honest
-- Non-judgmental and curious
-- Warm and supportive
+CRITICAL NAME PLACEMENT RULES:
+❌ FORBIDDEN: You must NEVER start your response with the user's name. Never write "${userName}, [response]".
+✅ REQUIRED: You must place "${userName}" in the MIDDLE or at the END of your response.
 
-PERSONALIZATION (MANDATORY - MUST INCLUDE USER'S NAME):
-✅ REQUIRED: Start your response with the user's name: "${userName}"
-✅ Examples of CORRECT format:
-   - "${userName}, thank you for that honesty. It takes courage to name what feels unclear..."
-   - "${userName}, I hear you. That honesty matters..."
-   - "${userName}, thank you for being so real about that..."
-✅ The name creates warmth and deepen the reflective connection
-✅ Without the name, it feels clinical. With it, it feels like caring support.
+EXAMPLES OF CORRECT FORMAT:
+- "Thank you for that honesty, ${userName}. It takes courage to name what feels unclear..."
+- "I hear you, ${userName}. That honesty matters..."
+- "It's completely normal to feel that way about this, ${userName}..."
 
-⚠️ CRITICAL: If your response doesn't start with "${userName}", you have FAILED the task.
-⚠️ EVERY RESPONSE must begin with: ${userName}, ...
-
-HARD CONSTRAINTS (NON-NEGOTIABLE):
+HARD CONSTRAINTS:
 ❌ Do NOT ask multiple questions
 ❌ Do NOT provide solutions or advice
 ❌ Do NOT diagnose or label them
-❌ Do NOT interpret or explain their response
 ❌ Do NOT create urgency or pressure
-❌ Do NOT use clinical/therapeutic language
-
-✅ DO:
-✅ Validate their honesty and courage in sharing
-✅ Offer 1-2 sentences of warm acknowledgment
-✅ Use their name when validating (builds connection)
-✅ Optionally ask ONE clarifying question (if it deepens reflection)
-✅ Keep response under 80 words
-✅ Maintain reflective, curious tone
 
 STRUCTURE:
-1. Begin with user's name
-2. Brief acknowledgment (1-2 sentences)
-3. Optional single clarifying question OR reflection prompt
-4. That's it - no more.
-
-EXAMPLE GOOD RESPONSE (WITH USER'S NAME):
-"${userName}, thank you for being honest about that. It takes courage to name what feels off. What do you think it would take for things to shift here?"
-
-EXAMPLE BAD RESPONSE (DO NOT DO):
-"I see. So it sounds like you need to work on X. Have you considered trying Y? What about Z?" ❌ (too many questions, prescriptive, no name)
+1. Brief acknowledgment incorporating the user's name in the middle or end (1-2 sentences)
+2. Optional single clarifying question OR reflection prompt
+3. Keep it under 80 words total.
 
 CONTEXT:
 Domain: ${domain}
-Assessment type: ${assessmentType} (what's going ${assessmentType})
+Assessment type: ${assessmentType}
 User: ${userName || "Friend"}
 User response: "${userResponse}"
-Follow-up number: ${followUpCount + 1} of 2
-
-EXAMPLE WITH NAME:
-"Sarah, thank you for that honesty. It takes courage to name what feels unclear. What do you think would help bring clarity here?"`;
+Follow-up number: ${followUpCount + 1} of 2`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4",
@@ -441,9 +363,9 @@ EXAMPLE WITH NAME:
     });
 
     const followUp = response.choices[0]?.message?.content || "";
-    
+
     if (!followUp.trim()) {
-      return "Thank you for sharing authentically. That honesty matters.";
+      return `Thank you for sharing authentically, ${userName}. That honesty matters.`;
     }
 
     return followUp;
@@ -458,12 +380,12 @@ EXAMPLE WITH NAME:
 
 function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQuestion[] {
   const firstName = userName.split(" ")[0] || userName || "Friend";
-  
+
   return [
     {
       id: "personal",
       domain: "personal",
-      question: `${firstName}, what does a healthy and fulfilled personal life look like for you?`,
+      question: `What does a healthy and fulfilled personal life look like for you, ${firstName}?`,
       prompt: "Consider your physical health, emotional wellbeing, intellectual growth, and spiritual life. What would thriving look like?",
       guidance: "Be honest about where you are and where you'd like to be.",
       examples: [
@@ -475,7 +397,7 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
     {
       id: "family",
       domain: "family",
-      question: `${firstName}, how do you want to strengthen your relationships with family and friends?`,
+      question: `When you think about family and friends, ${firstName}, how do you want to strengthen those relationships?`,
       prompt: "Think about your spouse, children, parents, extended family, and close friendships. What changes would deepen these connections?",
       guidance: "Focus on what matters most to you in these relationships.",
       examples: [
@@ -487,7 +409,7 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
     {
       id: "church",
       domain: "church",
-      question: `${firstName}, how do you want your faith life to grow in this season?`,
+      question: `How do you want your faith life to grow in this season, ${firstName}?`,
       prompt: "Consider your spiritual practice, faith community, ministry, and discipleship. What would spiritual growth look like for you?",
       guidance: "Reflect on what matters to you spiritually.",
       examples: [
@@ -499,7 +421,7 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
     {
       id: "vocation",
       domain: "vocation",
-      question: `${firstName}, what would greater fulfillment in your work or vocation look like?`,
+      question: `What would greater fulfillment in your work or vocation look like for you, ${firstName}?`,
       prompt: "Think about your career, daily work, professional growth, and sense of calling. What changes would bring more alignment and meaning?",
       guidance: "Consider both practical and meaningful aspects of work.",
       examples: [
@@ -511,7 +433,7 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
     {
       id: "community",
       domain: "community",
-      question: `${firstName}, how do you want to contribute to and engage with your community?`,
+      question: `Looking at your community, ${firstName}, how do you want to contribute and engage?`,
       prompt: "Reflect on your neighborhood, civic involvement, volunteer work, and ways to give back. What would meaningful community engagement look like?",
       guidance: "Think about causes and connections that matter to you.",
       examples: [
@@ -523,13 +445,15 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
   ];
 }
 
-function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
+function getWhereIAmNowFallbackQuestions(userName: string = "Friend"): Record<string, AIQuestion[]> {
+  const firstName = userName.split(" ")[0] || userName || "Friend";
+
   return {
     personal: [
       {
         id: "p1",
         domain: "personal",
-        question: "How are you doing with your physical health and energy?",
+        question: `How are you doing with your physical health and energy right now, ${firstName}?`,
         prompt:
           "Think about sleep, movement, nutrition, and how you generally feel in your body.",
         guidance:
@@ -545,7 +469,7 @@ function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
       {
         id: "f1",
         domain: "family",
-        question: "How connected do you feel to your closest relationships?",
+        question: `When reflecting on your inner circle, ${firstName}, how connected do you feel to your closest relationships?`,
         prompt:
           "Think about your spouse, children, close friends—whoever matters most.",
         guidance:
@@ -561,7 +485,7 @@ function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
       {
         id: "c1",
         domain: "church",
-        question: "How engaged do you feel in your spiritual life right now?",
+        question: `How engaged do you feel in your spiritual life right now, ${firstName}?`,
         prompt: "Think about your prayer life, church community, and faith.",
         guidance:
           "Engagement ebbs and flows—what matters is being honest about where you are.",
@@ -576,7 +500,7 @@ function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
       {
         id: "v1",
         domain: "vocation",
-        question: "Does your work feel aligned with your values and strengths?",
+        question: `Does your work feel aligned with your values and strengths, ${firstName}?`,
         prompt:
           "Think about your job, calling, daily work—whatever your vocation looks like.",
         guidance:
@@ -592,7 +516,7 @@ function getWhereIAmNowFallbackQuestions(): Record<string, AIQuestion[]> {
       {
         id: "co1",
         domain: "community",
-        question: "How present are you in your local community?",
+        question: `Looking outward, ${firstName}, how present are you in your local community?`,
         prompt:
           "Think about your neighborhood, volunteer involvement, civic engagement.",
         guidance:
