@@ -49,23 +49,14 @@ const Introduction: React.FC = () => {
     <div className={style["container"]}>
       <div className={style["bg"]}></div>
 
+      {/* Navigation remains unchanged */}
       <nav className={style["navbar"]}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className={style["nav-left"]}>
           <Link
             to="/"
             aria-label="Back to homepage"
             title="Go to homepage"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "34px",
-              height: "34px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              color: "white",
-              textDecoration: "none",
-            }}
+            className={style["nav-back-btn"]}
           >
             <svg
               viewBox="0 0 24 24"
@@ -84,12 +75,14 @@ const Introduction: React.FC = () => {
             YourLifePlanJourney<span>.com</span>
           </div>
         </div>
+
         <div className={style["nav-breadcrumb"]}>
           Getting Started{" "}
-          <span style={{ color: "rgba(255,255,255,0.25)" }}>›</span>{" "}
+          <span className={style["breadcrumb-separator"]}>›</span>{" "}
           <strong>Where I Am Now</strong>
         </div>
-        <div ref={profileMenuRef} style={{ position: "relative" }}>
+
+        <div ref={profileMenuRef} className={style["profile-wrapper"]}>
           <button
             type="button"
             className={style["nav-avatar"]}
@@ -97,38 +90,15 @@ const Introduction: React.FC = () => {
             aria-haspopup="menu"
             aria-expanded={isProfileMenuOpen}
             aria-label="Open profile menu"
-            style={{ border: "none" }}
           >
             {profileInitials}
           </button>
           {isProfileMenuOpen && (
-            <div
-              role="menu"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: "calc(100% + 8px)",
-                minWidth: "120px",
-                background: "#1f2937",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "10px",
-                padding: "6px",
-                zIndex: 20,
-              }}
-            >
+            <div role="menu" className={style["profile-dropdown"]}>
               <button
                 type="button"
                 onClick={handleLogout}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  color: "white",
-                  textAlign: "left",
-                  padding: "8px 10px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
+                className={style["logout-btn"]}
               >
                 Logout
               </button>
@@ -139,25 +109,48 @@ const Introduction: React.FC = () => {
 
       <div className={style["main"]}>
         <div className={style["intro-card"]}>
-          <div className={style["module-tag"]}>
-            📍 Module 2 of 10 · Getting Started
-          </div>
 
-          <div className={style["intro-title"]}>Current State Assessment</div>
-          <div className={style["intro-subtitle"]}>
-            A 360° View of My Life Right Now
-          </div>
-
-          <div className={style["intro-desc"]}>
-            This module is your current state assessment. It is where you can
-            describe your current life right now. You will do this by answering
-            4 questions for each of 5 life domains.
-          </div>
-
-          <div className={style["domains-box"]}>
-            <div className={style["domains-title"]}>
-              You'll reflect across five areas of your life:
+          {/* Header Section */}
+          <div className={style["intro-header"]}>
+            <div className={style["module-tag"]}>
+              📍 Module 2 of 10 · Getting Started
             </div>
+            <h1 className={style["intro-title"]}>Current State Assessment</h1>
+            <h2 className={style["intro-subtitle"]}>
+              A 360° View of My Life Right Now
+            </h2>
+            <p className={style["intro-desc"]}>
+              This module is your Current State Assessment. It is where you can describe what your life looks like right now. You will do this by answering 4 questions for each of 5 life domains.
+            </p>
+          </div>
+
+          {/* NEW: 4 Questions Grid layout for scannability */}
+          <div className={style["questions-grid"]}>
+            <div className={style["question-card"]}>
+              <div className={style["qc-header"]}>What is right?</div>
+              <div className={style["qc-body"]}>Identifies what is going well and gives perspective on what you may <strong>optimize</strong> in the future.</div>
+            </div>
+            <div className={style["question-card"]}>
+              <div className={style["qc-header"]}>What is wrong?</div>
+              <div className={style["qc-body"]}>Illuminates what isn't working right now. These are items that might be <strong>changed</strong> in the future.</div>
+            </div>
+            <div className={style["question-card"]}>
+              <div className={style["qc-header"]}>What is missing?</div>
+              <div className={style["qc-body"]}>Identifies the voids in each domain. This points toward what might be <strong>added</strong> to your life.</div>
+            </div>
+            <div className={style["question-card"]}>
+              <div className={style["qc-header"]}>What is confused?</div>
+              <div className={style["qc-body"]}>Highlights areas needing to be prioritized, organized, or refocused to <strong>clarify</strong> your future.</div>
+            </div>
+          </div>
+
+          <hr className={style["divider"]} />
+
+          {/* Domains Section */}
+          <div className={style["domains-box"]}>
+            <h3 className={style["domains-title"]}>
+              The Five Life Domains:
+            </h3>
 
             <div className={style["domains-grid"]}>
               <div className={style["domain-item"]}>
@@ -165,8 +158,7 @@ const Introduction: React.FC = () => {
                 <div className={style["domain-info"]}>
                   <div className={style["domain-name"]}>Personal</div>
                   <div className={style["domain-desc"]}>
-                    Your self. Your spiritual,intellectual, emotional, and
-                    physical life
+                    Physical, emotional, spiritual, & intellectual self
                   </div>
                 </div>
               </div>
@@ -176,8 +168,7 @@ const Introduction: React.FC = () => {
                 <div className={style["domain-info"]}>
                   <div className={style["domain-name"]}>Family & Friends</div>
                   <div className={style["domain-desc"]}>
-                    Marriage, friendships, finances, extended family
-                    relationships
+                    Parents, spouse, children, & extended family
                   </div>
                 </div>
               </div>
@@ -187,8 +178,7 @@ const Introduction: React.FC = () => {
                 <div className={style["domain-info"]}>
                   <div className={style["domain-name"]}>Church & Kingdom</div>
                   <div className={style["domain-desc"]}>
-                    Spiritual gifts, roles, and unique contribution to God's
-                    work
+                    Relations within the body of Christ; sense of calling
                   </div>
                 </div>
               </div>
@@ -198,61 +188,56 @@ const Introduction: React.FC = () => {
                 <div className={style["domain-info"]}>
                   <div className={style["domain-name"]}>Vocation</div>
                   <div className={style["domain-desc"]}>
-                    Talents, thinking style, drives, passions, and work
-                    expression
+                    Work or career; including roles in volunteer services
                   </div>
                 </div>
               </div>
 
-              {/* Added inline style via style object for the grid-column spanning */}
-              <div
-                className={style["domain-item"]}
-                style={{ gridColumn: "1/-1", justifyContent: "center" }}
-              >
+              {/* Specific class for full-width rather than inline style */}
+              <div className={`${style["domain-item"]} ${style["domain-item-full"]}`}>
                 <div className={style["domain-icon"]}>🌍</div>
                 <div className={style["domain-info"]}>
                   <div className={style["domain-name"]}>Community</div>
                   <div className={style["domain-desc"]}>
-                    Civic life, neighborhood, and local engagement
+                    Giving back to society; neighborhood, town, or city
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className={style["response-note"]}>
-            <div className={style["rn-title"]}>
-              You can respond with short or longer answers:
+          {/* NEW: Example Box layout to separate instructions from content */}
+          <div className={style["example-box"]}>
+            <p className={style["eb-title"]}>As you move through this process, you can respond with brief or in-depth answers. Both are valid.</p>
+
+            <div className={style["eb-row"]}>
+              <span className={style["eb-badge"]}>Brief</span>
+              <p className={style["eb-text"]}>"I feel more consistent in my routines."</p>
             </div>
-            <div className={style["rn-examples"]}>
-              <div className={style["rn-ex"]}>
-                "I feel more consistent in my routines."
-              </div>
-              <div className={style["rn-ex"]}>
-                "I feel more consistent in my routines, especially with my
-                health and time with God..."
-              </div>
+
+            <div className={style["eb-row"]}>
+              <span className={style["eb-badge"]}>In-depth</span>
+              <p className={style["eb-text"]}>"I feel more consistent in my routines, especially with my health and time with God, and that has helped me feel more grounded overall."</p>
             </div>
           </div>
 
           <div className={style["closing-note"]}>
             <strong>
-              What matters most is that your responses reflect what is true for
-              you right now.
+              What matters most is that your responses reflect what is true for you right now.
             </strong>
-            <p>This process will help you go deeper as you continue.</p>
+            <p>The process will help you go deeper as you continue.</p>
           </div>
 
-          <button
-            className={style["begin-btn"]}
-            onClick={() => navigate("/where-i-am-now")}
-          >
-            Begin Your Assessment →
-          </button>
+          <div className={style["action-container"]}>
+            <button
+              className={style["begin-btn"]}
+              onClick={() => navigate("/getting-started")}
+            >
+              Begin Your Assessment →
+            </button>
+          </div>
         </div>
       </div>
-
-      <div className={style["screen-label"]}>Screen 2 — Module 2 Intro</div>
     </div>
   );
 };
