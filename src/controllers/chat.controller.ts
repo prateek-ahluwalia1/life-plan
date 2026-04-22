@@ -82,7 +82,7 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
 
     // Call ChatGPT API
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5.4",
       messages,
       temperature: 0.7,
       max_tokens: 2000,

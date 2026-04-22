@@ -103,7 +103,7 @@ The user is: ${firstName}
 Remember: NEVER start the question with their name. Put it in the middle or at the end.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-5.4",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContext },
@@ -200,7 +200,7 @@ JSON FORMAT (REQUIRED):
 ]`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5.4",
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -284,7 +284,7 @@ Generate assessment prompts for all 5 domains using the deterministic framework.
 Remember: NEVER start the prompt with their name. Put it in the middle or at the end.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5.4",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userContext },
@@ -356,7 +356,7 @@ User response: "${userResponse}"
 Follow-up number: ${followUpCount + 1} of 2`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-5.4",
       messages: [{ role: "system", content: systemPrompt }],
       temperature: 0.75,
       max_tokens: 250,
