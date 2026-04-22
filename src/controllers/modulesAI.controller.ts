@@ -27,15 +27,8 @@ export const getAIGettingStartedQuestions = async (
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Fetch existing data for context
-    const existingData = await GettingStartedModules.findOne({ userId });
-
-    // Generate AI questions
-    const questions = await generateGettingStartedQuestions(
-      userName,
-      req.user?.email || "",
-      existingData?.toObject() || undefined
-    );
+    // Generate AI questions (Only pass userName, as the service expects 1 argument)
+    const questions = await generateGettingStartedQuestions(userName);
 
     return res.status(200).json({
       success: true,
