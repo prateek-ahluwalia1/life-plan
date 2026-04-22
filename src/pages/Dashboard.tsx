@@ -376,7 +376,7 @@ const Dashboard = () => {
 
                 <div className={styles["stage-body-gs"]}>
                   {/* MODULE 1 */}
-                  <Link to="/why-i-am-here" style={{ textDecoration: "none" }}>
+                  <Link to="/introduction" style={{ textDecoration: "none" }}>
                     <div className={`${styles["mod-node"]} ${mod1Done ? styles.completed : mod1Active ? styles.active : styles.locked}`}>
                       <div className={styles["mn-icon-row"]}>
                         <span className={styles["mn-icon"]}>
@@ -392,7 +392,7 @@ const Dashboard = () => {
                   </Link>
 
                   {/* MODULE 2 */}
-                  <Link to={mod2Locked ? "#" : "/introduction"} style={{ textDecoration: "none", pointerEvents: mod2Locked ? "none" : "auto" }}>
+                  <Link to={mod2Locked ? "#" : "/where-i-am-now"} style={{ textDecoration: "none", pointerEvents: mod2Locked ? "none" : "auto" }}>
                     <div className={`${styles["mod-node"]} ${mod2Done ? styles.completed : mod2Active ? styles.active : styles.locked}`}>
                       <div className={styles["mn-icon-row"]}>
                         <span className={styles["mn-icon"]}>
