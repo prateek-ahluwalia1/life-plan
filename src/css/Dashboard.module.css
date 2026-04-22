@@ -167,7 +167,6 @@ nav {
 }
 
 @keyframes pulse-dot {
-
   0%,
   100% {
     opacity: 1;
@@ -342,7 +341,14 @@ nav {
   flex: 1;
   padding: 32px 36px;
   overflow-y: auto;
-  margin-left: 60px;
+  margin-left: 64px; /* Updated to perfectly match the 64px sidebar width */
+}
+
+/* NEW WRAPPER TO PREVENT STRETCHING ON LARGE SCREENS */
+.content-inner {
+  width: 100%;
+  max-width: 1440px; /* Adjust this value between 1200px and 1600px if needed */
+  margin: 0 auto;    /* Centers the layout horizontally */
 }
 
 /* WELCOME BANNER */
