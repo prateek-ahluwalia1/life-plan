@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import WhereIAmNow from "../models/whereIAmNow.model";
+import LifePlanModules from "../models/lifePlanModules.model";
 import { buildModulePdf } from "../services/pdf.service";
 import {
   createConfirmationToken,
@@ -66,7 +67,6 @@ const exampleIntroductions: Record<AssessmentColumn, string> = {
     "Here are some examples of what may be **missing or lacking** in your life right now. Notice what resonates:",
 };
 
-// Example library - predefined examples for each domain and core question
 interface ExamplesLibrary {
   [key: string]: {
     [key: string]: string[];
@@ -405,6 +405,15 @@ const upsertWhereIAmNow = async (req: AuthenticatedRequest, res: Response) => {
       },
     ).lean();
 
+    // AUTO-UNLOCK DASHBOARD LOGIC
+    if (payload.flow.isComplete || payload.moduleProgress >= 100) {
+      await LifePlanModules.findOneAndUpdate(
+        { userId },
+        { $set: { "progress.whereiam": true } },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    }
+
     return res.status(200).json({
       tableData: updated?.tableData || payload.tableData,
       followupTableData:
@@ -429,7 +438,6 @@ const resetWhereIAmNow = async (req: AuthenticatedRequest, res: Response) => {
 
     const confirmationId = req.body?.confirmationId as string | undefined;
 
-    // If no confirmationId provided, generate one and request confirmation
     if (!confirmationId) {
       const newConfirmationId = createConfirmationToken(userId, "reset_where_i_am_now");
       return res.status(200).json({
@@ -439,7 +447,6 @@ const resetWhereIAmNow = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Verify confirmation token
     const isValid = verifyConfirmationToken(confirmationId, userId, "reset_where_i_am_now");
     if (!isValid) {
       return res.status(400).json({
@@ -448,8 +455,14 @@ const resetWhereIAmNow = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Token is valid, proceed with reset
     await WhereIAmNow.findOneAndDelete({ userId });
+
+    // AUTO-LOCK DASHBOARD LOGIC
+    await LifePlanModules.findOneAndUpdate(
+      { userId },
+      { $set: { "progress.whereiam": false } }
+    );
+
     return res.status(200).json({
       status: "reset_complete",
       message: "Where I Am Now progress reset",
@@ -495,7 +508,6 @@ const downloadWhereIAmNowPdf = async (
   }
 };
 
-// Export example library for frontend use
 const getExamples = async (_req: Request, res: Response) => {
   try {
     return res.status(200).json(EXAMPLES);
@@ -505,7 +517,6 @@ const getExamples = async (_req: Request, res: Response) => {
   }
 };
 
-// Export metadata for frontend (domain labels, definitions, questions)
 const getMetadata = async (_req: Request, res: Response) => {
   try {
     return res.status(200).json({

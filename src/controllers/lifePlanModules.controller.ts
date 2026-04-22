@@ -21,6 +21,7 @@ const supportedDocumentKeys: LifePlanDocumentKey[] = [
 ];
 
 const createEmptyProgress = (): LifePlanProgress => ({
+  whyiamhere: false,
   whereiam: false,
   perspective: false,
   surrender: false,
@@ -58,6 +59,9 @@ const sanitizeProgressPatch = (value: unknown): Partial<LifePlanProgress> => {
   const raw = value as Record<string, unknown>;
   const patch: Partial<LifePlanProgress> = {};
 
+  if (typeof raw.whyiamhere === "boolean") {
+    patch.whyiamhere = raw.whyiamhere;
+  }
   if (typeof raw.whereiam === "boolean") {
     patch.whereiam = raw.whereiam;
   }
@@ -101,8 +105,8 @@ const buildDocumentSections = (
           paragraphs:
             payload.surrenderItems.length > 0
               ? payload.surrenderItems.map(
-                  (item, index) => `${index + 1}. ${item}`,
-                )
+                (item, index) => `${index + 1}. ${item}`,
+              )
               : ["No surrender items have been saved yet."],
         },
       ],
@@ -118,7 +122,7 @@ const buildDocumentSections = (
           heading: "Mission Statement",
           paragraphs: [
             payload.missionStatement ||
-              "No mission statement has been saved yet.",
+            "No mission statement has been saved yet.",
           ],
         },
       ],
@@ -134,7 +138,7 @@ const buildDocumentSections = (
           heading: "Vision Statement",
           paragraphs: [
             payload.visionStatement ||
-              "No vision statement has been saved yet.",
+            "No vision statement has been saved yet.",
           ],
         },
       ],
@@ -274,7 +278,6 @@ const resetLifePlanModules = async (
 
     const confirmationId = req.body?.confirmationId as string | undefined;
 
-    // If no confirmationId provided, generate one and request confirmation
     if (!confirmationId) {
       const newConfirmationId = createConfirmationToken(userId, "reset_lifeplan");
       return res.status(200).json({
@@ -284,7 +287,6 @@ const resetLifePlanModules = async (
       });
     }
 
-    // Verify confirmation token
     const isValid = verifyConfirmationToken(confirmationId, userId, "reset_lifeplan");
     if (!isValid) {
       return res.status(400).json({
@@ -293,7 +295,6 @@ const resetLifePlanModules = async (
       });
     }
 
-    // Token is valid, proceed with reset
     await LifePlanModules.findOneAndDelete({ userId });
     return res.status(200).json({
       status: "reset_complete",

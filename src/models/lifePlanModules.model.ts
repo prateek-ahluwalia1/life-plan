@@ -10,6 +10,7 @@ export interface ILifePlanModules extends Document, LifePlanModulesPayload {
 
 const progressSchema = new Schema<LifePlanProgress>(
   {
+    whyiamhere: { type: Boolean, default: false },
     whereiam: { type: Boolean, default: false },
     perspective: { type: Boolean, default: false },
     surrender: { type: Boolean, default: false },

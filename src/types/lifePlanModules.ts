@@ -1,4 +1,5 @@
 export type LifePlanProgress = {
+  whyiamhere: boolean;
   whereiam: boolean;
   perspective: boolean;
   surrender: boolean;

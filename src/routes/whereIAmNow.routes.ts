@@ -8,19 +8,16 @@ const router = Router();
 router.get(
   "/where-i-am-now",
   authMiddleware,
-  moduleGatingMiddleware("whereiam"),
   whereIAmNowController.getWhereIAmNow,
 );
 router.put(
   "/where-i-am-now",
   authMiddleware,
-  moduleGatingMiddleware("whereiam"),
   whereIAmNowController.upsertWhereIAmNow,
 );
 router.delete(
   "/where-i-am-now",
   authMiddleware,
-  moduleGatingMiddleware("whereiam"),
   whereIAmNowController.resetWhereIAmNow,
 );
 router.get(
@@ -30,7 +27,6 @@ router.get(
   whereIAmNowController.downloadWhereIAmNowPdf,
 );
 
-// Public endpoints for examples and metadata
 router.get(
   "/where-i-am-now/examples",
   whereIAmNowController.getExamples,

@@ -1,5 +1,6 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import GettingStartedModules from "../models/gettingStartedModules.model";
+import LifePlanModules from "../models/lifePlanModules.model";
 import type {
   GettingStartedProgress,
   GettingStartedModulesPayload,
@@ -83,35 +84,30 @@ const buildDocumentSections = (payload: GettingStartedModulesPayload) => {
       paragraphs: [payload.overallGoal],
     });
   }
-
   if (payload.goalPersonal) {
     sections.push({
       heading: "Personal Domain Goal",
       paragraphs: [payload.goalPersonal],
     });
   }
-
   if (payload.goalFamilyFriends) {
     sections.push({
       heading: "Family & Friends Domain Goal",
       paragraphs: [payload.goalFamilyFriends],
     });
   }
-
   if (payload.goalChurchKingdom) {
     sections.push({
       heading: "Church & Kingdom Domain Goal",
       paragraphs: [payload.goalChurchKingdom],
     });
   }
-
   if (payload.goalVocation) {
     sections.push({
       heading: "Vocation Domain Goal",
       paragraphs: [payload.goalVocation],
     });
   }
-
   if (payload.goalCommunity) {
     sections.push({
       heading: "Community Domain Goal",
@@ -169,7 +165,6 @@ const upsertGettingStartedModules = async (
       doc = new GettingStartedModules({ userId });
     }
 
-    // Update progress fields if provided
     if (progress && typeof progress === "object") {
       const progressPatch = sanitizeProgressPatch(progress);
       if (Object.keys(progressPatch).length > 0) {
@@ -177,27 +172,32 @@ const upsertGettingStartedModules = async (
       }
     }
 
-    // Always update goal fields if they're provided (even if empty string, that's intentional)
-    if (overallGoal !== undefined) {
-      doc.overallGoal = sanitizeText(overallGoal);
-    }
-    if (goalPersonal !== undefined) {
-      doc.goalPersonal = sanitizeText(goalPersonal);
-    }
-    if (goalFamilyFriends !== undefined) {
-      doc.goalFamilyFriends = sanitizeText(goalFamilyFriends);
-    }
-    if (goalChurchKingdom !== undefined) {
-      doc.goalChurchKingdom = sanitizeText(goalChurchKingdom);
-    }
-    if (goalVocation !== undefined) {
-      doc.goalVocation = sanitizeText(goalVocation);
-    }
-    if (goalCommunity !== undefined) {
-      doc.goalCommunity = sanitizeText(goalCommunity);
-    }
+    if (overallGoal !== undefined) doc.overallGoal = sanitizeText(overallGoal);
+    if (goalPersonal !== undefined) doc.goalPersonal = sanitizeText(goalPersonal);
+    if (goalFamilyFriends !== undefined) doc.goalFamilyFriends = sanitizeText(goalFamilyFriends);
+    if (goalChurchKingdom !== undefined) doc.goalChurchKingdom = sanitizeText(goalChurchKingdom);
+    if (goalVocation !== undefined) doc.goalVocation = sanitizeText(goalVocation);
+    if (goalCommunity !== undefined) doc.goalCommunity = sanitizeText(goalCommunity);
 
     await doc.save();
+
+    // AUTO-UNLOCK DASHBOARD LOGIC
+    const mergedProgress = doc.progress as GettingStartedProgress;
+    const isWhyIAmHereDone =
+      mergedProgress.overallGoalComplete &&
+      mergedProgress.personalDomainComplete &&
+      mergedProgress.familyDomainComplete &&
+      mergedProgress.churchDomainComplete &&
+      mergedProgress.vocationDomainComplete &&
+      mergedProgress.communityDomainComplete;
+
+    if (isWhyIAmHereDone) {
+      await LifePlanModules.findOneAndUpdate(
+        { userId },
+        { $set: { "progress.whyiamhere": true } },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    }
 
     const normalized = normalizePayload(doc.toObject());
     return res.status(200).json(normalized);
@@ -220,7 +220,6 @@ const resetGettingStartedModules = async (
 
     const confirmationId = req.body?.confirmationId as string | undefined;
 
-    // If no confirmationId provided, generate one and request confirmation
     if (!confirmationId) {
       const newConfirmationId = createConfirmationToken(userId, "reset_getting_started");
       return res.status(200).json({
@@ -230,7 +229,6 @@ const resetGettingStartedModules = async (
       });
     }
 
-    // Verify confirmation token
     const isValid = verifyConfirmationToken(confirmationId, userId, "reset_getting_started");
     if (!isValid) {
       return res.status(400).json({
@@ -239,12 +237,17 @@ const resetGettingStartedModules = async (
       });
     }
 
-    // Token is valid, proceed with reset
     await GettingStartedModules.findOneAndDelete({ userId });
 
     const initialPayload = createInitialPayload();
     const newDoc = new GettingStartedModules({ userId, ...initialPayload });
     await newDoc.save();
+
+    // AUTO-LOCK DASHBOARD LOGIC
+    await LifePlanModules.findOneAndUpdate(
+      { userId },
+      { $set: { "progress.whyiamhere": false } }
+    );
 
     return res.status(200).json({
       status: "reset_complete",

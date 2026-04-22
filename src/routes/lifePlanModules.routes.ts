@@ -8,19 +8,16 @@ const router = Router();
 router.get(
   "/life-plan-modules",
   authMiddleware,
-  moduleGatingMiddleware("perspective"),
   lifePlanModulesController.getLifePlanModules,
 );
 router.put(
   "/life-plan-modules",
   authMiddleware,
-  moduleGatingMiddleware("perspective"),
   lifePlanModulesController.upsertLifePlanModules,
 );
 router.delete(
   "/life-plan-modules",
   authMiddleware,
-  moduleGatingMiddleware("perspective"),
   lifePlanModulesController.resetLifePlanModules,
 );
 router.get(
