@@ -10,18 +10,31 @@ import {
   downloadModulePdfFromServer,
 } from "../utils/exports";
 
+// 1. UPDATE TYPES TO MATCH FULL PAYLOAD
 type LifePlanProgress = {
+  whyiamhere?: boolean;
   whereiam?: boolean;
   perspective?: boolean;
   surrender?: boolean;
   mypurpose?: boolean;
 };
 
+type LifePlanData = {
+  progress?: LifePlanProgress;
+  surrenderItems?: string[];
+  missionStatement?: string;
+  visionStatement?: string;
+  actionPlan?: string;
+};
+
 const JourneyComplete = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [progress, setProgress] = useState<LifePlanProgress>({});
+
+  // 2. TRACK FULL DATA INSTEAD OF JUST PROGRESS
+  const [moduleData, setModuleData] = useState<LifePlanData>({});
+
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
   const token = useSelector((state: RootState) => state.auth.token);
@@ -39,7 +52,12 @@ const JourneyComplete = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const shouldHideHero = Boolean(location.state?.hideHero);
+
+  const progress = moduleData.progress || {};
+
+  // 3. REQUIRE ALL 5 MODULES TO BE TRUE FOR FULL COMPLETION
   const isJourneyComplete =
+    Boolean(progress.whyiamhere) &&
     Boolean(progress.whereiam) &&
     Boolean(progress.perspective) &&
     Boolean(progress.surrender) &&
@@ -68,18 +86,15 @@ const JourneyComplete = () => {
         }
 
         const json = (await response.json()) as {
-          data?: {
-            progress?: LifePlanProgress;
-          };
+          data?: LifePlanData;
         };
 
         if (isCancelled || !json.data) {
           return;
         }
 
-        if (json.data.progress) {
-          setProgress(json.data.progress);
-        }
+        // Save entire payload to state
+        setModuleData(json.data);
       } catch {
         // Keep local fallback if backend is unavailable
       }
@@ -250,19 +265,9 @@ const JourneyComplete = () => {
               <span className={styles["sb-tip"]}>Dashboard</span>
             </Link>
           </button>
-          {/* <button className={`${styles['sb-btn']} ${styles.active}`}>
-            <Link to="/journey-complete" style={{ textDecoration: 'none', color: 'grey' }}>
-              <svg className={styles.icon} viewBox="0 0 24 24">
-                <path d="M3 12h18M3 12l7-7M3 12l7 7" />
-                <circle cx="17" cy="12" r="4" />
-              </svg>
-              <span className={styles['sb-tip']}>My Journey</span>
-            </Link>
-          </button> */}
           <Link
             to={"/journey-complete"}
-            className={styles["sb-btn"]}
-            style={{ color: "grey" }}
+            className={`${styles["sb-btn"]} ${styles.active}`}
           >
             <svg className={styles.icon} viewBox="0 0 24 24">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -344,14 +349,15 @@ const JourneyComplete = () => {
             <div className={styles["deliverables-grid"]}>
               {/* Getting Started Module */}
               <div className={styles["doc-card"]} style={{
-                backgroundColor: "rgba(147, 97, 254, 0.1)",
-                borderTop: "3px solid rgba(147, 97, 254, 0.5)",
+                backgroundColor: progress.whyiamhere ? "rgba(147, 97, 254, 0.1)" : "rgba(147, 97, 254, 0.05)",
+                borderTop: progress.whyiamhere ? "3px solid rgba(147, 97, 254, 0.5)" : "3px solid rgba(147, 97, 254, 0.2)",
+                opacity: progress.whyiamhere ? 1 : 0.6,
               }}>
                 <div className={`${styles["dc-head"]}`} style={{
-                  background: "linear-gradient(135deg, rgba(147, 97, 254, 0.3), rgba(168, 85, 247, 0.2))",
+                  background: progress.whyiamhere ? "linear-gradient(135deg, rgba(147, 97, 254, 0.3), rgba(168, 85, 247, 0.2))" : "linear-gradient(135deg, rgba(147, 97, 254, 0.15), rgba(168, 85, 247, 0.1))",
                 }}>
                   <div className={styles["dc-icon"]}>
-                    <i className="fa fa-rocket" style={{ color: "#a855f7" }}></i>
+                    <i className="fa fa-rocket" style={{ color: progress.whyiamhere ? "#a855f7" : "#999" }}></i>
                   </div>
                   <div className={styles["dc-label"]}>Module 1</div>
                   <div className={styles["dc-title"]}>Getting Started</div>
@@ -371,36 +377,41 @@ const JourneyComplete = () => {
                         flex: 1,
                         padding: "10px 16px",
                         background: "transparent",
-                        color: "#a855f7",
-                        border: "1px solid rgba(168, 85, 247, 0.3)",
+                        color: progress.whyiamhere ? "#a855f7" : "#999",
+                        border: progress.whyiamhere ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(168, 85, 247, 0.15)",
                         borderRadius: "6px",
                         cursor: "default",
                         fontSize: "12px",
                       }}
                       type="button"
                     >
-                      ✓ Completed
+                      {progress.whyiamhere ? "✓ Completed" : "○ Not Started"}
                     </button>
                     <button
                       className={styles["dc-btn-dl"]}
                       onClick={() => token && downloadModulePdfFromServer(token, "modules/getting-started-modules/pdf", "getting-started-goals.pdf")}
+                      disabled={!progress.whyiamhere}
                       style={{
                         flex: 1,
                         padding: "10px 16px",
-                        background: "rgba(168, 85, 247, 0.3)",
-                        color: "white",
-                        border: "1px solid rgba(168, 85, 247, 0.5)",
+                        background: progress.whyiamhere ? "rgba(168, 85, 247, 0.3)" : "rgba(168, 85, 247, 0.1)",
+                        color: progress.whyiamhere ? "white" : "rgba(255, 255, 255, 0.4)",
+                        border: progress.whyiamhere ? "1px solid rgba(168, 85, 247, 0.5)" : "1px solid rgba(168, 85, 247, 0.2)",
                         borderRadius: "6px",
-                        cursor: "pointer",
+                        cursor: progress.whyiamhere ? "pointer" : "not-allowed",
                         fontSize: "13px",
                         fontWeight: "500",
                         transition: "all 0.2s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(168, 85, 247, 0.5)";
+                        if (progress.whyiamhere) {
+                          e.currentTarget.style.background = "rgba(168, 85, 247, 0.5)";
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(168, 85, 247, 0.3)";
+                        if (progress.whyiamhere) {
+                          e.currentTarget.style.background = "rgba(168, 85, 247, 0.3)";
+                        }
                       }}
                       type="button"
                     >
@@ -547,7 +558,7 @@ const JourneyComplete = () => {
                 </div>
               </div>
 
-              {/* Surrender Module */}
+              {/* Surrender Module - NOW USES ACTUAL SURRENDER ITEM */}
               <div className={styles["doc-card"]} style={{
                 backgroundColor: progress.surrender ? "rgba(244, 114, 182, 0.1)" : "rgba(244, 114, 182, 0.05)",
                 borderTop: progress.surrender ? "3px solid rgba(244, 114, 182, 0.5)" : "3px solid rgba(244, 114, 182, 0.2)",
@@ -557,14 +568,17 @@ const JourneyComplete = () => {
                   background: progress.surrender ? "linear-gradient(135deg, rgba(244, 114, 182, 0.3), rgba(236, 72, 153, 0.2))" : "linear-gradient(135deg, rgba(244, 114, 182, 0.15), rgba(236, 72, 153, 0.1))",
                 }}>
                   <div className={styles["dc-icon"]}>
-                    <i className="fa fa-dove" style={{ color: progress.surrender ? "#f472b6" : "#999" }}></i>
+                    <i className="fa fa-leaf" style={{ color: progress.surrender ? "#f472b6" : "#999" }}></i>
                   </div>
                   <div className={styles["dc-label"]}>Module 4</div>
                   <div className={styles["dc-title"]}>Surrender</div>
                 </div>
                 <div className={styles["dc-body"]}>
-                  <div className={styles["dc-preview"]}>
-                    "What you're releasing and trusting to move forward in faith."
+                  <div className={styles["dc-preview"]} style={{ fontStyle: "italic" }}>
+                    {progress.surrender && moduleData.surrenderItems && moduleData.surrenderItems.length > 0
+                      ? `"${moduleData.surrenderItems[0].substring(0, 70)}${moduleData.surrenderItems[0].length > 70 ? '...' : ''}"`
+                      : `"What you're releasing and trusting to move forward in faith."`
+                    }
                   </div>
                   <div style={{
                     display: "flex",
@@ -610,7 +624,7 @@ const JourneyComplete = () => {
                 </div>
               </div>
 
-              {/* My Purpose Module */}
+              {/* My Purpose Module - NOW USES ACTUAL MISSION STATEMENT */}
               <div className={styles["doc-card"]} style={{
                 backgroundColor: progress.mypurpose ? "rgba(34, 197, 94, 0.1)" : "rgba(34, 197, 94, 0.05)",
                 borderTop: progress.mypurpose ? "3px solid rgba(34, 197, 94, 0.5)" : "3px solid rgba(34, 197, 94, 0.2)",
@@ -626,8 +640,11 @@ const JourneyComplete = () => {
                   <div className={styles["dc-title"]}>My Purpose</div>
                 </div>
                 <div className={styles["dc-body"]}>
-                  <div className={styles["dc-preview"]}>
-                    "Your personal mission, vision, and purpose-aligned action plan."
+                  <div className={styles["dc-preview"]} style={{ fontStyle: "italic" }}>
+                    {progress.mypurpose && moduleData.missionStatement
+                      ? `"${moduleData.missionStatement.substring(0, 70)}${moduleData.missionStatement.length > 70 ? '...' : ''}"`
+                      : `"Your personal mission, vision, and purpose-aligned action plan."`
+                    }
                   </div>
                   <div style={{
                     display: "flex",

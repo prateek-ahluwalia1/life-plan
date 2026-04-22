@@ -109,7 +109,7 @@ const GettingStarted: React.FC = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-  
+
   // SYNTHESIS CONFIRMATION STATE
   const [showSynthesisModal, setShowSynthesisModal] = useState(false);
   const [synthesisData, setSynthesisData] = useState<{
@@ -137,7 +137,7 @@ const GettingStarted: React.FC = () => {
     // Handle ARRAY format from API (array of questions with domain field)
     if (Array.isArray(aiQuestions) && aiQuestions.length > 0) {
       console.log("[GettingStarted] Processing array format questions");
-      
+
       // Group questions by domain
       const questionsByDomain: Record<string, any[]> = {};
       aiQuestions.forEach((q: any) => {
@@ -180,7 +180,7 @@ const GettingStarted: React.FC = () => {
 
       const result = Object.entries(questionsByDomain).map(([domainKey, questions]: [string, any[]]) => {
         const examples = questions.slice(0, 4).map((q: any) => q.question || q.prompt || "");
-        
+
         return {
           key: keyMap[domainKey] as any,
           label: labelMap[domainKey] || domainKey,
@@ -202,9 +202,9 @@ const GettingStarted: React.FC = () => {
     // Handle OBJECT format from API (organized by domain)
     if (aiQuestions && typeof aiQuestions === 'object' && !Array.isArray(aiQuestions)) {
       console.log("[GettingStarted] Processing object format questions");
-      
+
       const domains = Object.entries(aiQuestions) as [string, any][];
-      
+
       const keyMap: Record<string, string> = {
         personal: "goalPersonal",
         family: "goalFamilyFriends",
@@ -234,7 +234,7 @@ const GettingStarted: React.FC = () => {
 
       const result = domains.map(([domainKey, domainQuestions]: [string, any]) => {
         const examples = (domainQuestions[0]?.examples || []).slice(0, 4);
-        
+
         return {
           key: keyMap[domainKey] as any,
           label: labelMap[domainKey] || domainKey,
@@ -242,14 +242,14 @@ const GettingStarted: React.FC = () => {
           examples: examples,
         };
       });
-      
+
       console.log("[GettingStarted] Successfully transformed object to domains:", result.map(d => ({
         key: d.key,
         label: d.label,
         examplesCount: d.examples.length,
         firstExample: d.examples[0],
       })));
-      
+
       return result;
     }
 
@@ -263,7 +263,7 @@ const GettingStarted: React.FC = () => {
 
   const transformedAIQuestions = aiQuestionsRaw ? transformAIQuestions(aiQuestionsRaw) : null;
   const domainGoals = transformedAIQuestions || fallbackDomainGoals;
-  
+
   // For the domains step, exclude "overallGoal" since it's handled in the overall step
   const domainGoalsForStep = domainGoals.filter(d => d.key !== "overallGoal");
 
@@ -339,7 +339,7 @@ const GettingStarted: React.FC = () => {
     console.log("[GettingStarted] Token available:", token ? "✓ Yes" : "✗ No");
     console.log("[GettingStarted] AI Loading state:", aiLoading ? "⏳ Loading..." : "✓ Ready");
     console.log("[GettingStarted] AI Error:", aiError ? "⚠️ " + aiError : "✓ None");
-    
+
     // Import to check cache status
     import("../hooks/useAIQuestions").then(({ getAICacheStatus }) => {
       const cacheStatus = getAICacheStatus();
@@ -877,7 +877,7 @@ const GettingStarted: React.FC = () => {
                       goalVocation: data.goalVocation,
                       goalCommunity: data.goalCommunity,
                     };
-                    
+
                     // Synthesize each domain goal
                     const hasAnyResponse = Object.values(allResponses).some(r => r.trim());
                     if (hasAnyResponse) {
@@ -942,7 +942,7 @@ const GettingStarted: React.FC = () => {
                       },
                     });
                     // Navigate to Where I Am Now module
-                    navigate("/introduction");
+                    navigate("/where-i-am-now");
                   }}
                   className={`${styles.btn} ${styles["btn-primary"]}`}
                 >

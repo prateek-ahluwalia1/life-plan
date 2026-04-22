@@ -174,14 +174,14 @@ const createEmptyTableData = (): TableData => ({
 });
 
 // Memoized table component to prevent re-renders during input typing
-const ProgressTable = ({ 
-  styles, 
-  tableData, 
-  followupTableData, 
-  lastUpdatedCell, 
+const ProgressTable = ({
+  styles,
+  tableData,
+  followupTableData,
+  lastUpdatedCell,
   handleEditQuestion,
   domains,
-  questionFlow 
+  questionFlow
 }: {
   styles: any;
   tableData: TableData;
@@ -304,17 +304,17 @@ const WhereIAmNow = () => {
   const dispatch = useDispatch();
   const userdata = useSelector((state: RootState) => state.auth.userdata);
   const token = useSelector((state: RootState) => state.auth.token);
-  
+
   // Module access gating
   const { isLocked } = useModuleAccess("where-i-am-now");
-  
+
   // AI Questions hooks (with fallback to hardcoded questions)
   console.log("[WhereIAmNow] Token available:", token ? "yes" : "no");
   const { questionsByDomain: aiQuestionsByDomain, loading: aiLoading, error: aiError } = useWhereIAmNowQuestions(token);
   const { generateFollowUp: _generateFollowUp } = useWhereIAmNowFollowUp(token);
-  
+
   console.log("[WhereIAmNow] AI questions - loading:", aiLoading, "domains:", Object.keys(aiQuestionsByDomain).length, "error:", aiError);
-  
+
   // Module restart state
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
@@ -469,9 +469,9 @@ const WhereIAmNow = () => {
         flow.push(questionStep);
       }
 
-      console.log("[WhereIAmNow] Successfully built flow with", flow.length, "questions (", 
+      console.log("[WhereIAmNow] Successfully built flow with", flow.length, "questions (",
         questionsToUse.length, "from AI,", 4 - questionsToUse.length, "from fallback)");
-      
+
       return flow.length === 4 ? flow : null;
     } catch (error) {
       console.error("[WhereIAmNow] Error building AI question flow:", error);
@@ -549,9 +549,9 @@ const WhereIAmNow = () => {
     const safeQuestionIndex =
       typeof restored.flow.questionIndex === "number"
         ? Math.max(
-            0,
-            Math.min(effectiveQuestionFlow.length - 1, restored.flow.questionIndex),
-          )
+          0,
+          Math.min(effectiveQuestionFlow.length - 1, restored.flow.questionIndex),
+        )
         : resume.questionIndex;
 
     setDomainIndex(safeDomainIndex);
@@ -644,7 +644,7 @@ const WhereIAmNow = () => {
     console.log("[WhereIAmNow] AI Loading state:", aiLoading ? "⏳ Loading..." : "✓ Ready");
     console.log("[WhereIAmNow] AI Domains loaded:", Object.keys(aiQuestionsByDomain).length);
     console.log("[WhereIAmNow] AI Error:", aiError ? "⚠️ " + aiError : "✓ None");
-    
+
     // Import to check cache status
     import("../hooks/useAIQuestions").then(({ getAICacheStatus }) => {
       const cacheStatus = getAICacheStatus();
@@ -806,9 +806,9 @@ const WhereIAmNow = () => {
 
   const handleSynthesisConfirm = async () => {
     if (!synthesisData) return;
-    
+
     const { domain, column, mainResponse } = synthesisData;
-    
+
     // Save the response to the table
     setTableData((prev) => ({
       ...prev,
@@ -822,7 +822,7 @@ const WhereIAmNow = () => {
       domain,
       column,
     });
-    
+
     setLastReflection(
       getReflectionText(
         mainResponse,
@@ -842,7 +842,7 @@ const WhereIAmNow = () => {
         .getElementById("affirmationBlock")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
-    
+
     // Clear modal
     setShowSynthesisModal(false);
     setSynthesisData(null);
@@ -1058,7 +1058,7 @@ const WhereIAmNow = () => {
         setIsEditingExisting(false);
         setLastUpdatedCell(null);
         setHasAnswered(false);
-        
+
         // Clear restart modal state
         setShowRestartConfirm(false);
         setRestartConfirmId(null);
@@ -1078,9 +1078,9 @@ const WhereIAmNow = () => {
 
   // Check module access
   if (isLocked) {
-    return <ModuleGatingBlock 
-      moduleName="Where I Am Now" 
-      requiredModules={["getting-started"]} 
+    return <ModuleGatingBlock
+      moduleName="Where I Am Now"
+      requiredModules={["getting-started"]}
       onRetry={() => window.location.reload()}
     />;
   }
@@ -1345,22 +1345,22 @@ const WhereIAmNow = () => {
               )}
 
               {!aiLoading && aiQuestionsByDomain && (
-                Array.isArray(aiQuestionsByDomain) 
+                Array.isArray(aiQuestionsByDomain)
                   ? aiQuestionsByDomain.length > 0 && !aiError
                   : Object.keys(aiQuestionsByDomain).length > 0 && !aiError
               ) && (
-                <div style={{
-                  padding: "12px 16px",
-                  background: "rgba(100, 200, 100, 0.1)",
-                  border: "1px solid rgba(100, 200, 100, 0.3)",
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                  color: "rgba(150, 255, 150, 0.9)",
-                  fontSize: "13px",
-                }}>
-                  ✓ Personalized with AI insights
-                </div>
-              )}
+                  <div style={{
+                    padding: "12px 16px",
+                    background: "rgba(100, 200, 100, 0.1)",
+                    border: "1px solid rgba(100, 200, 100, 0.3)",
+                    borderRadius: "12px",
+                    marginBottom: "24px",
+                    color: "rgba(150, 255, 150, 0.9)",
+                    fontSize: "13px",
+                  }}>
+                    ✓ Personalized with AI insights
+                  </div>
+                )}
 
               {!isComplete && (
                 <>
@@ -1427,12 +1427,12 @@ const WhereIAmNow = () => {
                       style={
                         isStepSubmitted && !isEditingExisting
                           ? {
-                              opacity: 0.5,
-                              cursor: "not-allowed",
-                              background: "#555",
-                              color: "#aaa",
-                              pointerEvents: "none",
-                            }
+                            opacity: 0.5,
+                            cursor: "not-allowed",
+                            background: "#555",
+                            color: "#aaa",
+                            pointerEvents: "none",
+                          }
                           : undefined
                       }
                     >
