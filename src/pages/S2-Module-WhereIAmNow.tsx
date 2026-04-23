@@ -18,7 +18,7 @@ type DomainKey = "personal" | "family" | "church" | "vocation" | "community";
 
 type DomainEntry = {
   title: string;
-  examples: string[];
+  examples: Record<AssessmentColumn, string[]>;
   instructions: { purpose: string; whatToDo: string };
 };
 
@@ -53,17 +53,15 @@ const domains: Array<{ key: DomainKey; config: DomainEntry }> = [
     key: "personal",
     config: {
       title: "Personal",
-      examples: [
-        "1️⃣ I've been taking better care of my physical health and energy levels.",
-        "2️⃣ I feel more emotionally steady and less reactive than I used to.",
-        "3️⃣ My time with God has been more consistent and meaningful.",
-        "4️⃣ I'm growing in self-awareness and understanding how I'm wired.",
-      ],
+      examples: {
+        right: ["I've been taking better care of my physical health.", "I feel emotionally steady and less reactive.", "My time with God is consistent."],
+        wrong: ["My sleep is completely disrupted lately.", "I'm carrying a lot of unmanaged stress.", "I feel spiritually dry and distant."],
+        confused: ["I'm not sure what my actual priorities should be.", "I feel conflicted about how to spend my free time.", "I'm unsure why my energy suddenly drops."],
+        missing: ["I need a more structured morning routine.", "I lack a true space for deep rest.", "I'm missing a sense of emotional safety."]
+      },
       instructions: {
-        purpose:
-          "This domain explores your inner world — your health, emotions, sense of purpose, and spiritual life. These are the most intimate signals of where you truly are right now.",
-        whatToDo:
-          "Reflect honestly on how you are doing personally. Write 1–3 sentences for each question. There are no right or wrong answers — only what is true for you today.",
+        purpose: "This domain explores your inner world — your health, emotions, sense of purpose, and spiritual life. These are the most intimate signals of where you truly are right now.",
+        whatToDo: "Reflect honestly on how you are doing personally. Write 1–3 sentences for each question. There are no right or wrong answers — only what is true for you today.",
       },
     },
   },
@@ -71,16 +69,15 @@ const domains: Array<{ key: DomainKey; config: DomainEntry }> = [
     key: "family",
     config: {
       title: "Family & Friends",
-      examples: [
-        "We are communicating more intentionally this month.",
-        "I have felt supported by close friends recently.",
-        "Family dinners are helping us reconnect.",
-      ],
+      examples: {
+        right: ["We are communicating more intentionally this month.", "I feel fully supported by my close friends.", "Family dinners are helping us reconnect."],
+        wrong: ["There is underlying tension with my spouse.", "I've been too busy and neglected my friends.", "We are easily irritated with each other."],
+        confused: ["I don't know how to resolve a recurring argument.", "I'm unsure how to best support my child right now.", "Boundaries feel unclear in a specific friendship."],
+        missing: ["We lack quality, undistracted time together.", "I need deeper vulnerability in my friendships.", "We are missing a shared sense of fun and playfulness."]
+      },
       instructions: {
-        purpose:
-          "Your closest relationships shape everything. This domain explores how your key connections — spouse, children, close friends — are showing up in your life right now.",
-        whatToDo:
-          "Think about the people closest to you. Write 1–3 sentences for each question. Be honest — this assessment is private and meant to help you grow.",
+        purpose: "Your closest relationships shape everything. This domain explores how your key connections — spouse, children, close friends — are showing up in your life right now.",
+        whatToDo: "Think about the people closest to you. Write 1–3 sentences for each question. Be honest — this assessment is private and meant to help you grow.",
       },
     },
   },
@@ -88,16 +85,15 @@ const domains: Array<{ key: DomainKey; config: DomainEntry }> = [
     key: "church",
     config: {
       title: "Church & Kingdom",
-      examples: [
-        "I have been more consistent in prayer this season.",
-        "Serving at church has brought fresh energy.",
-        "Scripture has felt more personal this week.",
-      ],
+      examples: {
+        right: ["Serving has brought me fresh energy.", "I feel deeply connected to my small group.", "My personal prayer life is growing."],
+        wrong: ["I feel disconnected during weekend services.", "I am wrestling with heavy doubt and frustration.", "I feel burned out from over-serving."],
+        confused: ["I'm unsure where I fit in my church community.", "I feel conflicted about some theological questions.", "I don't know what my spiritual gifts are."],
+        missing: ["I lack a spiritual mentor or guide.", "I need more authentic, vulnerable community.", "I'm missing a sense of awe and worship."]
+      },
       instructions: {
-        purpose:
-          "Your faith community and spiritual engagement are central to your LifePlan. This domain looks at how your relationship with God and His people is thriving or struggling.",
-        whatToDo:
-          "Reflect on your involvement in your church and your personal walk with God. Write 1–3 sentences for each question. Honesty here is the starting point for growth.",
+        purpose: "Your faith community and spiritual engagement are central to your LifePlan. This domain looks at how your relationship with God and His people is thriving or struggling.",
+        whatToDo: "Reflect on your involvement in your church and your personal walk with God. Write 1–3 sentences for each question.",
       },
     },
   },
@@ -105,16 +101,15 @@ const domains: Array<{ key: DomainKey; config: DomainEntry }> = [
     key: "vocation",
     config: {
       title: "Vocation",
-      examples: [
-        "I have clarity on my key priorities at work.",
-        "I am doing work that aligns with my values.",
-        "I have seen tangible progress in my responsibilities.",
-      ],
+      examples: {
+        right: ["I am doing work that aligns with my values.", "I have clarity on my key priorities.", "I feel respected by my team."],
+        wrong: ["I am constantly exhausted and overworked.", "I feel completely undervalued in my role.", "My daily tasks drain me completely."],
+        confused: ["I don't know if I should stay or look for a new job.", "I'm unsure what my next career step should be.", "I get mixed feedback on my performance."],
+        missing: ["I lack a clear path for professional growth.", "I need more meaning and purpose in my tasks.", "I'm missing healthy work-life boundaries."]
+      },
       instructions: {
-        purpose:
-          "Your calling, career, and daily work form a major part of your identity and contribution. This domain examines alignment between what you do and who God has called you to be.",
-        whatToDo:
-          "Consider your work, your sense of calling, and whether your daily efforts feel purposeful. Write 1–3 sentences for each question.",
+        purpose: "Your calling, career, and daily work form a major part of your identity and contribution. This domain examines alignment between what you do and who God has called you to be.",
+        whatToDo: "Consider your work, your sense of calling, and whether your daily efforts feel purposeful. Write 1–3 sentences for each question.",
       },
     },
   },
@@ -122,16 +117,15 @@ const domains: Array<{ key: DomainKey; config: DomainEntry }> = [
     key: "community",
     config: {
       title: "Community",
-      examples: [
-        "I am showing up consistently in meaningful relationships.",
-        "I have been more present with neighbors and friends.",
-        "I feel connected to people beyond my immediate circle.",
-      ],
+      examples: {
+        right: ["I feel connected to my neighbors.", "My volunteer work is deeply fulfilling.", "I am showing up consistently for causes I care about."],
+        wrong: ["I am completely isolated from my local neighborhood.", "I feel cynical about the state of the world.", "I overcommitted and can't sustain my involvement."],
+        confused: ["I want to help but don't know where to start.", "I'm conflicted about which causes deserve my limited time.", "I'm unsure how to engage safely."],
+        missing: ["I lack deep roots in my local area.", "I need a tangible way to give back.", "I'm missing relationships outside my usual bubble."]
+      },
       instructions: {
-        purpose:
-          "Beyond your immediate circle, how are you showing up in the world around you? This domain reflects your broader impact, social presence, and contribution to others.",
-        whatToDo:
-          "Think about your neighbors, networks, and the people you influence beyond your family. Write 1–3 sentences for each question.",
+        purpose: "Beyond your immediate circle, how are you showing up in the world around you? This domain reflects your broader impact, social presence, and contribution to others.",
+        whatToDo: "Think about your neighbors, networks, and the people you influence beyond your family. Write 1–3 sentences for each question.",
       },
     },
   },
@@ -142,8 +136,7 @@ const questionFlow: QuestionStep[] = [
     column: "right",
     label: "What is right",
     prompt: "What has been going well for you in this area?",
-    placeholder:
-      "Share Your Thoughts ... What is working well ? What are you grateful for in this area ? ",
+    placeholder: "Share Your Thoughts ... What is working well ? What are you grateful for in this area ? ",
   },
   {
     column: "wrong",
@@ -173,7 +166,6 @@ const createEmptyTableData = (): TableData => ({
   community: { right: "", wrong: "", confused: "", missing: "" },
 });
 
-// Memoized table component to prevent re-renders during input typing
 const ProgressTable = ({
   styles,
   tableData,
@@ -308,12 +300,11 @@ const WhereIAmNow = () => {
   // Module access gating
   const { isLocked } = useModuleAccess("where-i-am-now");
 
-  // AI Questions hooks (with fallback to hardcoded questions)
-  console.log("[WhereIAmNow] Token available:", token ? "yes" : "no");
+  // AI Questions & Follow-Up hooks
   const { questionsByDomain: aiQuestionsByDomain, loading: aiLoading, error: aiError } = useWhereIAmNowQuestions(token);
-  const { generateFollowUp: _generateFollowUp } = useWhereIAmNowFollowUp(token);
 
-  console.log("[WhereIAmNow] AI questions - loading:", aiLoading, "domains:", Object.keys(aiQuestionsByDomain).length, "error:", aiError);
+  // Destructure the internally managed states directly from the hook. No separate useState required!
+  const { followUp: dynamicFollowUp, loading: isGeneratingFollowUp, generateFollowUp } = useWhereIAmNowFollowUp(token);
 
   // Module restart state
   const [restartConfirmId, setRestartConfirmId] = useState<string | null>(null);
@@ -349,7 +340,6 @@ const WhereIAmNow = () => {
     column: AssessmentColumn;
   } | null>(null);
 
-  // FIX 1: Track whether user has submitted at least one answer
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRemoteSyncReady, setIsRemoteSyncReady] = useState(false);
@@ -368,145 +358,51 @@ const WhereIAmNow = () => {
 
   const [analysis, setAnalysis] = useState("");
 
-  // Build dynamic question flow from AI questions if available
-  const buildAIQuestionFlow = (aiQuestionsByDomain: any): QuestionStep[] | null => {
-    if (!aiQuestionsByDomain) {
-      return null;
-    }
-
-    try {
-      console.log("[WhereIAmNow] Building question flow from:", {
-        type: typeof aiQuestionsByDomain,
-        isArray: Array.isArray(aiQuestionsByDomain),
-        length: Array.isArray(aiQuestionsByDomain) ? aiQuestionsByDomain.length : Object.keys(aiQuestionsByDomain).length,
-      });
-
-      const questionColumns: AssessmentColumn[] = ["right", "wrong", "confused", "missing"];
-      const questionLabels = ["What is right", "What is wrong", "What is confused", "What is missing"];
-      const flow: QuestionStep[] = [];
-
-      // Fallback questions in case AI returns fewer than needed
-      const fallbackQuestions: QuestionStep[] = [
-        {
-          column: "right",
-          label: "What is right",
-          prompt: "What has been going well for you in this area?",
-          placeholder: "Share Your Thoughts ... What is working well ? What are you grateful for in this area ? ",
-        },
-        {
-          column: "wrong",
-          label: "What is wrong",
-          prompt: "What feels off, difficult, or draining in this area right now?",
-          placeholder: "Write 1-3 sentences about what is not going well...",
-        },
-        {
-          column: "confused",
-          label: "What is confused",
-          prompt: "Where do you feel unclear, conflicted, or uncertain?",
-          placeholder: "Write 1-3 sentences about confusion or mixed signals...",
-        },
-        {
-          column: "missing",
-          label: "What is missing",
-          prompt: "What do you sense is absent that would make this area healthier?",
-          placeholder: "Write 1-3 sentences about what is missing...",
-        },
-      ];
-
-      let questionsToUse: any[] = [];
-
-      // Handle ARRAY format (flat list of questions)
-      if (Array.isArray(aiQuestionsByDomain)) {
-        console.log("[WhereIAmNow] Processing array format");
-        // Group by domain, then take first domain's questions
-        const byDomain: Record<string, any[]> = {};
-        aiQuestionsByDomain.forEach((q: any) => {
-          const domain = q.domain?.toLowerCase() || "unknown";
-          if (!byDomain[domain]) {
-            byDomain[domain] = [];
-          }
-          byDomain[domain].push(q);
-        });
-        questionsToUse = Object.values(byDomain)[0] || [];
-      }
-      // Handle OBJECT format (organized by domain)
-      else if (typeof aiQuestionsByDomain === 'object' && Object.keys(aiQuestionsByDomain).length > 0) {
-        console.log("[WhereIAmNow] Processing object format");
-        const firstDomain = Object.values(aiQuestionsByDomain)[0];
-        if (Array.isArray(firstDomain)) {
-          questionsToUse = firstDomain;
-        }
-      }
-
-      if (!questionsToUse || questionsToUse.length === 0) {
-        console.log("[WhereIAmNow] No questions found to use");
-        return null;
-      }
-
-      console.log("[WhereIAmNow] AI returned", questionsToUse.length, "questions");
-
-      // Map AI questions to the 4 required columns
-      // If AI returns fewer than 4, fill the rest with fallback
-      for (let i = 0; i < 4; i++) {
-        let questionStep: QuestionStep;
-
-        if (i < questionsToUse.length) {
-          // Use AI question for this slot
-          const aiQ = questionsToUse[i];
-          questionStep = {
-            column: questionColumns[i],
-            label: questionLabels[i],
-            prompt: aiQ.prompt || aiQ.question || questionLabels[i],
-            placeholder: aiQ.guidance || `Share your thoughts about ${questionLabels[i].toLowerCase()}...`,
-          };
-          console.log(`[WhereIAmNow] Column ${i} (${questionColumns[i]}): Using AI question`);
-        } else {
-          // Use fallback for this slot
-          questionStep = fallbackQuestions[i];
-          console.log(`[WhereIAmNow] Column ${i} (${questionColumns[i]}): Using fallback question`);
-        }
-
-        flow.push(questionStep);
-      }
-
-      console.log("[WhereIAmNow] Successfully built flow with", flow.length, "questions (",
-        questionsToUse.length, "from AI,", 4 - questionsToUse.length, "from fallback)");
-
-      return flow.length === 4 ? flow : null;
-    } catch (error) {
-      console.error("[WhereIAmNow] Error building AI question flow:", error);
-      return null;
-    }
-  };
-
-  const dynamicQuestionFlow = buildAIQuestionFlow(aiQuestionsByDomain);
-  const effectiveQuestionFlow = dynamicQuestionFlow || questionFlow;
-
-  // Function to find next unanswered step - uses effective flow
   const getNextUnansweredStep = (data: TableData) => {
     for (let d = 0; d < domains.length; d += 1) {
-      for (let q = 0; q < effectiveQuestionFlow.length; q += 1) {
+      for (let q = 0; q < questionFlow.length; q += 1) {
         const domainKey = domains[d].key;
-        const columnKey = effectiveQuestionFlow[q].column;
+        const columnKey = questionFlow[q].column;
         if (!data[domainKey][columnKey].trim()) {
           return { domainIndex: d, questionIndex: q, isComplete: false };
         }
       }
     }
-
     return {
       domainIndex: domains.length - 1,
-      questionIndex: effectiveQuestionFlow.length - 1,
+      questionIndex: questionFlow.length - 1,
       isComplete: true,
     };
   };
 
-  const currentDomain = domains[domainIndex];
-  const currentQuestion = effectiveQuestionFlow[questionIndex];
-  const totalQuestions = domains.length * effectiveQuestionFlow.length;
+  const getFallbackFollowUp = (column: string) => {
+    switch (column) {
+      case "right": return "What feels most impactful or encouraging about these areas that are going well right now?";
+      case "wrong": return "What feels most draining about this, and what is one small step that might ease it?";
+      case "confused": return "If you had to guess the root of this confusion, what might it be?";
+      case "missing": return "Why do you think this is missing, and what would it look like to begin adding it?";
+      default: return "What else comes to mind when you reflect on this?";
+    }
+  };
 
-  // Track if we're using AI questions
-  const isUsingAIQuestions = dynamicQuestionFlow !== null && !aiLoading;
+  const currentDomain = domains[domainIndex];
+  const baseQuestion = questionFlow[questionIndex];
+  const totalQuestions = domains.length * questionFlow.length;
+
+  // Safely extract AI data for the current domain matching the exact column
+  const domainAiData = aiQuestionsByDomain?.[currentDomain.key];
+  let aiQuestionObj: any = null;
+
+  if (Array.isArray(domainAiData) && domainAiData.length > 0) {
+    aiQuestionObj = domainAiData.find((q: any) => q.core === baseQuestion.column || q.id?.includes(baseQuestion.column));
+  }
+
+  const isUsingAIQuestions = !!aiQuestionObj && !aiLoading;
+
+  const activePrompt = isUsingAIQuestions ? (aiQuestionObj.prompt || baseQuestion.prompt) : baseQuestion.prompt;
+  const activeExamples = isUsingAIQuestions && aiQuestionObj?.examples?.length > 0
+    ? aiQuestionObj.examples
+    : currentDomain.config.examples[baseQuestion.column];
 
   const answeredCount = useMemo(() => {
     let count = 0;
@@ -550,7 +446,7 @@ const WhereIAmNow = () => {
       typeof restored.flow.questionIndex === "number"
         ? Math.max(
           0,
-          Math.min(effectiveQuestionFlow.length - 1, restored.flow.questionIndex),
+          Math.min(questionFlow.length - 1, restored.flow.questionIndex),
         )
         : resume.questionIndex;
 
@@ -559,17 +455,12 @@ const WhereIAmNow = () => {
     setIsComplete(restored.flow.isComplete ?? resume.isComplete);
   };
 
-  // Mark hydration complete before backend fetch starts.
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  // Then sync with backend once auth token is available
   useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
+    if (!isHydrated) return;
     if (!token) {
       setIsRemoteSyncReady(true);
       return;
@@ -589,15 +480,10 @@ const WhereIAmNow = () => {
           credentials: "include",
         });
 
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
 
         const json = (await response.json()) as WhereIAmNowPayload;
-
-        if (isCancelled || !json) {
-          return;
-        }
+        if (isCancelled || !json) return;
 
         applyRestoredData({
           tableData: json.tableData || createEmptyTableData(),
@@ -608,101 +494,45 @@ const WhereIAmNow = () => {
       } catch {
         // Keep local fallback when backend is unavailable
       } finally {
-        if (!isCancelled) {
-          setIsRemoteSyncReady(true);
-        }
+        if (!isCancelled) setIsRemoteSyncReady(true);
       }
     };
 
     void loadRemoteData();
 
-    return () => {
-      isCancelled = true;
-    };
+    return () => { isCancelled = true; };
   }, [token, isHydrated]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Debug: Log cache and API status on mount
-  useEffect(() => {
-    console.log("%c=== Where I Am Now Module Loaded ===", "color: purple; font-weight: bold; font-size: 14px");
-    console.log("[WhereIAmNow] Token available:", token ? "✓ Yes" : "✗ No");
-    console.log("[WhereIAmNow] AI Loading state:", aiLoading ? "⏳ Loading..." : "✓ Ready");
-    console.log("[WhereIAmNow] AI Domains loaded:", Object.keys(aiQuestionsByDomain).length);
-    console.log("[WhereIAmNow] AI Error:", aiError ? "⚠️ " + aiError : "✓ None");
-
-    // Import to check cache status
-    import("../hooks/useAIQuestions").then(({ getAICacheStatus }) => {
-      const cacheStatus = getAICacheStatus();
-      console.log("[WhereIAmNow] Cache Status:", cacheStatus);
-      console.log("%cTip: Add ?no-cache to URL to bypass cache and force fresh API call", "color: green");
-    });
-  }, []);
-
 
   useEffect(() => {
     if (!isComplete && !isStepSubmitted && !isEditingExisting) {
-      const timer = window.setTimeout(() => {
-        mainInputRef.current?.focus();
-      }, 60);
-
-      return () => {
-        window.clearTimeout(timer);
-      };
+      const timer = window.setTimeout(() => { mainInputRef.current?.focus(); }, 60);
+      return () => window.clearTimeout(timer);
     }
-  }, [
-    domainIndex,
-    questionIndex,
-    isComplete,
-    isStepSubmitted,
-    isEditingExisting,
-  ]);
+  }, [domainIndex, questionIndex, isComplete, isStepSubmitted, isEditingExisting]);
 
-  // Auto-save everything
   useEffect(() => {
-    if (!isHydrated || !isRemoteSyncReady) {
-      return;
-    }
+    if (!isHydrated || !isRemoteSyncReady || !token) return;
 
-    const flow = {
-      domainIndex,
-      questionIndex,
-      isComplete,
-      lastReflection,
-      hasAnswered,
-    };
+    const flow = { domainIndex, questionIndex, isComplete, lastReflection, hasAnswered };
 
-    if (!token) {
-      return;
-    }
-
-    if (persistTimeoutRef.current) {
-      window.clearTimeout(persistTimeoutRef.current);
-    }
+    if (persistTimeoutRef.current) window.clearTimeout(persistTimeoutRef.current);
 
     persistTimeoutRef.current = window.setTimeout(async () => {
-      if (pendingSaveRef.current) {
-        // Skip if a save is already in progress
-        return;
-      }
+      if (pendingSaveRef.current) return;
 
       pendingSaveRef.current = true;
       try {
-        const response = await fetch(`${apiURL}modules/where-i-am-now`, {
+        await fetch(`${apiURL}modules/where-i-am-now`, {
           method: "PUT",
           headers: {
             Accept: "application/json",
@@ -710,180 +540,98 @@ const WhereIAmNow = () => {
             Authorization: `Bearer ${token}`,
           },
           credentials: "include",
-          body: JSON.stringify({
-            tableData,
-            followupTableData,
-            analysis,
-            flow,
-            moduleProgress,
-          }),
+          body: JSON.stringify({ tableData, followupTableData, analysis, flow, moduleProgress }),
         });
-
-        if (!response.ok) {
-          console.error("Auto-save failed:", response.statusText);
-        }
       } catch (err) {
         console.error("Network error during auto-save:", err);
       } finally {
         pendingSaveRef.current = false;
       }
     }, 500);
-  }, [
-    tableData,
-    followupTableData,
-    analysis,
-    domainIndex,
-    questionIndex,
-    isComplete,
-    lastReflection,
-    hasAnswered,
-    isHydrated,
-    isRemoteSyncReady,
-    token,
-    moduleProgress,
-  ]);
+  }, [tableData, followupTableData, analysis, domainIndex, questionIndex, isComplete, lastReflection, hasAnswered, isHydrated, isRemoteSyncReady, token, moduleProgress]);
 
   useEffect(() => {
-    return () => {
-      if (persistTimeoutRef.current) {
-        window.clearTimeout(persistTimeoutRef.current);
-      }
-    };
+    return () => { if (persistTimeoutRef.current) window.clearTimeout(persistTimeoutRef.current); };
   }, []);
 
   const isTableComplete = answeredCount === totalQuestions;
 
-  const getReflectionText = (
-    response: string,
-    domainTitle: string,
-    questionLabel: string,
-  ) => {
+  const getReflectionText = (response: string, domainTitle: string, questionLabel: string) => {
     const condensed = response.trim().replace(/\s+/g, " ");
-    const preview =
-      condensed.length > 110 ? `${condensed.slice(0, 110)}...` : condensed;
+    const preview = condensed.length > 110 ? `${condensed.slice(0, 110)}...` : condensed;
     return `Thank you. For ${domainTitle}, you identified ${questionLabel}: "${preview}"`;
   };
 
   const moveToNextStep = () => {
-    if (questionIndex < effectiveQuestionFlow.length - 1) {
+    if (questionIndex < questionFlow.length - 1) {
       setQuestionIndex((prev: number) => prev + 1);
       return;
     }
-
     if (domainIndex < domains.length - 1) {
       setDomainIndex((prev: number) => prev + 1);
       setQuestionIndex(0);
       return;
     }
-
     setIsComplete(true);
   };
 
-  // Synthesis handlers for table responses
   const handleShowSynthesis = (domain: DomainKey, column: AssessmentColumn, mainResponse: string) => {
     if (!isValidResponse(mainResponse)) {
-      console.warn("[WhereIAmNow] Response too short, not showing synthesis modal");
-      // Still save the response
-      setTableData((prev) => ({
-        ...prev,
-        [domain]: {
-          ...prev[domain],
-          [column]: mainResponse,
-        },
-      }));
+      setTableData((prev) => ({ ...prev, [domain]: { ...prev[domain], [column]: mainResponse } }));
       return;
     }
 
     const synthesized = synthesizeResponse(mainResponse, []);
-    setSynthesisData({
-      domain,
-      column,
-      mainResponse,
-      synthesized,
-    });
+    setSynthesisData({ domain, column, mainResponse, synthesized });
     setShowSynthesisModal(true);
   };
 
   const handleSynthesisConfirm = async () => {
     if (!synthesisData) return;
-
     const { domain, column, mainResponse } = synthesisData;
 
-    // Save the response to the table
-    setTableData((prev) => ({
-      ...prev,
-      [domain]: {
-        ...prev[domain],
-        [column]: mainResponse,
-      },
-    }));
-
-    setLastUpdatedCell({
-      domain,
-      column,
-    });
-
-    setLastReflection(
-      getReflectionText(
-        mainResponse,
-        domains.find(d => d.key === domain)?.config.title || domain,
-        `${column} assessment`,
-      ),
-    );
+    setTableData((prev) => ({ ...prev, [domain]: { ...prev[domain], [column]: mainResponse } }));
+    setLastUpdatedCell({ domain, column });
+    setLastReflection(getReflectionText(mainResponse, domains.find(d => d.key === domain)?.config.title || domain, `${column} assessment`));
     setInputValue("");
-
-    // Mark that user has now answered
     setHasAnswered(true);
     setIsStepSubmitted(true);
 
-    // Auto-scroll to AI response after a brief delay (allows render)
     setTimeout(() => {
-      document
-        .getElementById("affirmationBlock")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("affirmationBlock")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
 
-    // Clear modal
     setShowSynthesisModal(false);
     setSynthesisData(null);
+
+    // FETCH AI FOLLOW-UP (Passing exactly ONE object)
+    if (generateFollowUp && !isEditingExisting) {
+      // NOTE: If your TypeScript still throws an error on `userResponse` or `assessmentType`, 
+      // change them to `response: mainResponse` and `column: column` depending on your interface!
+      generateFollowUp({
+        domain: domain,
+        userResponse: mainResponse,
+        assessmentType: column
+      }).catch(err => console.error("Failed to generate follow up:", err));
+    }
   };
 
   const handleSynthesisEdit = () => {
-    // Just close the modal and let user continue editing
     setShowSynthesisModal(false);
     setSynthesisData(null);
   };
 
   const handleSubmitAnswer = () => {
     const cleaned = inputValue.trim();
-    if (!cleaned || isComplete) {
-      return;
-    }
-
+    if (!cleaned || isComplete) return;
     const activeDomain = domains[domainIndex];
-    const activeQuestion = effectiveQuestionFlow[questionIndex];
-
-    // Show synthesis confirmation before saving
+    const activeQuestion = questionFlow[questionIndex];
     handleShowSynthesis(activeDomain.key, activeQuestion.column, cleaned);
   };
 
-  // const getNextPrompt = () => {
-  //   if (isComplete) {
-  //     return "You have completed all domains and questions. Review your table and final notes before continuing.";
-  //   }
-  //   return questionFlow[questionIndex].prompt;
-  // };
-
   const generatePDF = () => {
-    if (!token) {
-      return;
-    }
-
-    void downloadModulePdfFromServer(
-      token,
-      "modules/where-i-am-now/pdf",
-      "where-i-am-now.pdf",
-    );
+    if (!token) return;
+    void downloadModulePdfFromServer(token, "modules/where-i-am-now/pdf", "where-i-am-now.pdf");
   };
 
   const handleUnlockPerspective = async () => {
@@ -891,35 +639,16 @@ const WhereIAmNow = () => {
       navigate("/perspective");
       return;
     }
-
     try {
-      // Save completion progress first
-      const response = await fetch(`${apiURL}modules/life-plan-modules`, {
+      await fetch(`${apiURL}modules/life-plan-modules`, {
         method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
-        body: JSON.stringify({
-          progress: {
-            whereiam: true,
-          },
-        }),
+        body: JSON.stringify({ progress: { whereiam: true } }),
       });
-
-      if (response.ok) {
-        // Only navigate after the progress has been saved
-        navigate("/perspective");
-      } else {
-        console.error("Failed to save progress");
-        // Still navigate even if save failed
-        navigate("/perspective");
-      }
+      navigate("/perspective");
     } catch (error) {
       console.error("Error saving progress:", error);
-      // Still navigate even if save failed
       navigate("/perspective");
     }
   };
@@ -929,14 +658,11 @@ const WhereIAmNow = () => {
     if (!cleanedFollowup && !isEditingExisting) return;
 
     const activeDomain = domains[domainIndex];
-    const activeQuestion = effectiveQuestionFlow[questionIndex];
+    const activeQuestion = questionFlow[questionIndex];
 
     setFollowupTableData((prev) => ({
       ...prev,
-      [activeDomain.key]: {
-        ...prev[activeDomain.key],
-        [activeQuestion.column]: cleanedFollowup,
-      },
+      [activeDomain.key]: { ...prev[activeDomain.key], [activeQuestion.column]: cleanedFollowup },
     }));
 
     if (isEditingExisting) {
@@ -947,29 +673,22 @@ const WhereIAmNow = () => {
       return;
     }
 
-    // Clear for next question
     setIsStepSubmitted(false);
     setFollowupValue("");
     setInputValue("");
     moveToNextStep();
 
     setTimeout(() => {
-      document
-        .querySelector(`.${styles["question-card"]}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector(`.${styles["question-card"]}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       mainInputRef.current?.focus();
     }, 80);
   };
 
   const handleEditQuestion = (domain: DomainKey, column: AssessmentColumn) => {
     const nextDomainIndex = domains.findIndex((item) => item.key === domain);
-    const nextQuestionIndex = questionFlow.findIndex(
-      (item) => item.column === column,
-    );
+    const nextQuestionIndex = questionFlow.findIndex((item) => item.column === column);
 
-    if (nextDomainIndex < 0 || nextQuestionIndex < 0) {
-      return;
-    }
+    if (nextDomainIndex < 0 || nextQuestionIndex < 0) return;
 
     setDomainIndex(nextDomainIndex);
     setQuestionIndex(nextQuestionIndex);
@@ -981,31 +700,20 @@ const WhereIAmNow = () => {
     setLastUpdatedCell({ domain, column });
 
     setTimeout(() => {
-      document
-        .querySelector(`.${styles["question-card"]}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector(`.${styles["question-card"]}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 60);
   };
 
   const handleResetTable = () => {
-    const confirmed = window.confirm(
-      "This will clear all answers and follow-up notes for this module. Continue?",
-    );
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm("This will clear all answers and follow-up notes for this module. Continue?");
+    if (!confirmed) return;
 
     if (token) {
       fetch(`${apiURL}modules/where-i-am-now`, {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
-      }).catch((err) => {
-        console.error("Failed to delete module data:", err);
-      });
+      }).catch((err) => console.error("Failed to delete module data:", err));
     }
 
     setTableData(createEmptyTableData());
@@ -1023,10 +731,8 @@ const WhereIAmNow = () => {
     setLastUpdatedCell(null);
   };
 
-  // Module restart handlers
   const handleRestart = async () => {
     if (!token) return;
-
     try {
       const result = await requestModuleRestart(token, "modules/where-i-am-now");
       if (result?.confirmationId) {
@@ -1040,11 +746,9 @@ const WhereIAmNow = () => {
 
   const handleConfirmRestart = async () => {
     if (!token || !restartConfirmId) return;
-
     try {
       const result = await confirmModuleRestart(token, "modules/where-i-am-now", restartConfirmId);
       if (result?.status === "reset_complete") {
-        // Reset all local state
         setTableData(createEmptyTableData());
         setFollowupTableData(createEmptyTableData());
         setAnalysis("");
@@ -1058,12 +762,8 @@ const WhereIAmNow = () => {
         setIsEditingExisting(false);
         setLastUpdatedCell(null);
         setHasAnswered(false);
-
-        // Clear restart modal state
         setShowRestartConfirm(false);
         setRestartConfirmId(null);
-      } else {
-        console.error("Restart failed:", result?.message);
       }
     } catch (err) {
       console.error("Failed to confirm restart:", err);
@@ -1076,13 +776,8 @@ const WhereIAmNow = () => {
     navigate("/");
   };
 
-  // Check module access
   if (isLocked) {
-    return <ModuleGatingBlock
-      moduleName="Where I Am Now"
-      requiredModules={["getting-started"]}
-      onRetry={() => window.location.reload()}
-    />;
+    return <ModuleGatingBlock moduleName="Where I Am Now" requiredModules={["getting-started"]} onRetry={() => window.location.reload()} />;
   }
 
   return (
@@ -1094,88 +789,24 @@ const WhereIAmNow = () => {
           <Link
             to="/"
             aria-label="Back to homepage"
-            title="Go to homepage"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "34px",
-              height: "34px",
-              borderRadius: "10px",
-              border: "1px solid rgba(255,255,255,0.15)",
-              color: "white",
-              textDecoration: "none",
-              marginRight: "10px",
-            }}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.15)", color: "white", textDecoration: "none", marginRight: "10px" }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
-          <div className={styles["nav-wordmark"]}>
-            YourLifePlanJourney<em>.com</em>
-          </div>
+          <div className={styles["nav-wordmark"]}>YourLifePlanJourney<em>.com</em></div>
         </div>
         <div className={styles["nav-center"]}>
-          <div className={styles["nav-center-dot"]}></div>
-          Faith-Based Life Journey
+          <div className={styles["nav-center-dot"]}></div>Faith-Based Life Journey
         </div>
-        <div
-          className={styles["nav-right"]}
-          ref={profileMenuRef}
-          style={{ position: "relative" }}
-        >
-          <button
-            type="button"
-            className={styles["nav-avatar"]}
-            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-            aria-haspopup="menu"
-            aria-expanded={isProfileMenuOpen}
-            aria-label="Open profile menu"
-            style={{ border: "none" }}
-          >
+        <div className={styles["nav-right"]} ref={profileMenuRef} style={{ position: "relative" }}>
+          <button type="button" className={styles["nav-avatar"]} onClick={() => setIsProfileMenuOpen((prev) => !prev)} aria-haspopup="menu" aria-expanded={isProfileMenuOpen} style={{ border: "none" }}>
             {profileInitials}
           </button>
           {isProfileMenuOpen && (
-            <div
-              role="menu"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: "calc(100% + 8px)",
-                minWidth: "120px",
-                background: "#1f2937",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "10px",
-                padding: "6px",
-                zIndex: 20,
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  color: "white",
-                  textAlign: "left",
-                  padding: "8px 10px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-              >
-                Logout
-              </button>
+            <div role="menu" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: "120px", background: "#1f2937", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "6px", zIndex: 20 }}>
+              <button type="button" onClick={handleLogout} style={{ width: "100%", border: "none", background: "transparent", color: "white", textAlign: "left", padding: "8px 10px", borderRadius: "8px", cursor: "pointer" }}>Logout</button>
             </div>
           )}
         </div>
@@ -1184,19 +815,13 @@ const WhereIAmNow = () => {
       <div className={styles["stage-bar"]}>
         <span className={styles["sb-label"]}>Stage 1 — Where I Am Now</span>
         <div className={styles["sb-track"]}>
-          <div
-            className={styles["sb-fill"]}
-            style={{ width: `${moduleProgress}%` }}
-          ></div>
+          <div className={styles["sb-fill"]} style={{ width: `${moduleProgress}%` }}></div>
         </div>
         <span className={styles["sb-count"]}>{moduleProgress}% complete</span>
       </div>
 
       <aside className={styles.sidebar}>
-        <Link
-          to="/dashboard"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
+        <Link to="/dashboard" style={{ textDecoration: "none", color: "inherit" }}>
           <button className={`${styles["sb-btn"]} ${styles.active}`}>
             <svg className={styles.icon} viewBox="0 0 24 24">
               <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -1207,12 +832,7 @@ const WhereIAmNow = () => {
             <span className={styles["sb-tip"]}>Dashboard</span>
           </button>
         </Link>
-        <Link
-          to={"/journey-complete"}
-          state={{ hideHero: true }}
-          className={styles["sb-btn"]}
-          style={{ color: "grey" }}
-        >
+        <Link to={"/journey-complete"} state={{ hideHero: true }} className={styles["sb-btn"]} style={{ color: "grey" }}>
           <svg className={styles.icon} viewBox="0 0 24 24">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -1225,11 +845,7 @@ const WhereIAmNow = () => {
 
         <div className={styles["sb-spacer"]}></div>
 
-        <button
-          onClick={handleRestart}
-          className={styles["sb-btn"]}
-          style={{ color: "#ff9800" }}
-        >
+        <button onClick={handleRestart} className={styles["sb-btn"]} style={{ color: "#ff9800" }}>
           <svg className={styles.icon} viewBox="0 0 24 24">
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
             <path d="M21 3v5h-5" />
@@ -1239,11 +855,7 @@ const WhereIAmNow = () => {
           <span className={styles["sb-tip"]}>Restart Module</span>
         </button>
 
-        <button
-          onClick={handleLogout}
-          className={styles["sb-btn"]}
-          style={{ color: "grey" }}
-        >
+        <button onClick={handleLogout} className={styles["sb-btn"]} style={{ color: "grey" }}>
           <svg className={styles.icon} viewBox="0 0 24 24">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
@@ -1255,37 +867,14 @@ const WhereIAmNow = () => {
 
       <div className={styles.layout}>
         <div className={styles.content}>
-          {/* AI Loading Indicator - Show at top level */}
           {aiLoading && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "20px",
-              padding: "12px 16px",
-              backgroundColor: "rgba(99, 102, 241, 0.1)",
-              border: "1px solid rgba(99, 102, 241, 0.3)",
-              borderRadius: "8px",
-              color: "#6366f1"
-            }}>
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Generating personalized assessment questions...
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", padding: "12px 16px", backgroundColor: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)", borderRadius: "8px", color: "#6366f1" }}>
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>Generating personalized assessment questions...</span>
             </div>
           )}
 
           {aiError && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "20px",
-              padding: "12px 16px",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: "8px",
-              color: "#ef4444"
-            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", padding: "12px 16px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", color: "#ef4444" }}>
               <span style={{ fontSize: "14px" }}>⚠️ {aiError}</span>
             </div>
           )}
@@ -1295,18 +884,9 @@ const WhereIAmNow = () => {
               <div className={styles["block-instructions"]}>
                 <div className={styles["bi-tag"]}>📌 Instructions</div>
                 <div className={styles["bi-text"]}>
-                  This module helps you take an honest snapshot of where you are
-                  in life by reflecting across five key domains. Let's start
-                  with the <strong>Personal</strong> domain — your spiritual,
-                  intellectual, emotional, and physical life.
-                  <br />
-                  <br />
-                  For each domain you'll answer 4 questions. Take a moment to
-                  reflect before answering.
-                  <strong>
-                    Your response should describe what is actually true for you
-                    right now.
-                  </strong>
+                  This module helps you take an honest snapshot of where you are in life by reflecting across five key domains. Let's start with the <strong>Personal</strong> domain — your spiritual, intellectual, emotional, and physical life.<br /><br />
+                  For each domain you'll answer 4 questions. Take a moment to reflect before answering.
+                  <strong> Your response should describe what is actually true for you right now.</strong>
                 </div>
               </div>
 
@@ -1317,180 +897,150 @@ const WhereIAmNow = () => {
               </div>
 
               {aiLoading && (
-                <div style={{
-                  padding: "40px 20px",
-                  textAlign: "center",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                }}>
-                  <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>
-                    Generating personalized assessment questions...
-                  </p>
+                <div style={{ padding: "40px 20px", textAlign: "center", background: "rgba(255, 255, 255, 0.05)", borderRadius: "12px", marginBottom: "24px" }}>
+                  <p style={{ marginTop: "16px", color: "rgba(255, 255, 255, 0.7)", fontSize: "14px" }}>Generating personalized assessment questions...</p>
                 </div>
               )}
 
               {aiError && (
-                <div style={{
-                  padding: "16px 20px",
-                  background: "rgba(255, 100, 100, 0.1)",
-                  border: "1px solid rgba(255, 100, 100, 0.3)",
-                  borderRadius: "12px",
-                  marginBottom: "24px",
-                  color: "rgba(255, 150, 150, 0.9)",
-                  fontSize: "14px",
-                }}>
+                <div style={{ padding: "16px 20px", background: "rgba(255, 100, 100, 0.1)", border: "1px solid rgba(255, 100, 100, 0.3)", borderRadius: "12px", marginBottom: "24px", color: "rgba(255, 150, 150, 0.9)", fontSize: "14px" }}>
                   ⚠️ Unable to load AI questions: {aiError}. Using standard assessment.
                 </div>
               )}
 
               {!aiLoading && aiQuestionsByDomain && (
-                Array.isArray(aiQuestionsByDomain)
-                  ? aiQuestionsByDomain.length > 0 && !aiError
-                  : Object.keys(aiQuestionsByDomain).length > 0 && !aiError
+                Array.isArray(aiQuestionsByDomain) ? aiQuestionsByDomain.length > 0 && !aiError : Object.keys(aiQuestionsByDomain).length > 0 && !aiError
               ) && (
-                  <div style={{
-                    padding: "12px 16px",
-                    background: "rgba(100, 200, 100, 0.1)",
-                    border: "1px solid rgba(100, 200, 100, 0.3)",
-                    borderRadius: "12px",
-                    marginBottom: "24px",
-                    color: "rgba(150, 255, 150, 0.9)",
-                    fontSize: "13px",
-                  }}>
+                  <div style={{ padding: "12px 16px", background: "rgba(100, 200, 100, 0.1)", border: "1px solid rgba(100, 200, 100, 0.3)", borderRadius: "12px", marginBottom: "24px", color: "rgba(150, 255, 150, 0.9)", fontSize: "13px" }}>
                     ✓ Personalized with AI insights
                   </div>
                 )}
 
               {!isComplete && (
                 <>
-                  <div
-                    className={styles["examples-card"]}
-                    style={{ overflow: "auto" }}
-                  >
-                    <div className={styles["card-title"]}>
-                      Here are some examples of what may be going well in your
-                      life right now. See what resonates:
+                  <div className={styles["examples-card"]} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
+                    <div className={styles["card-title"]} style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>
+                      Click the examples below to add them to your reflection, or type your own:
                     </div>
-                    <ul
-                      className={styles["example-list"]}
-                      style={{ marginTop: "20px" }}
-                    >
-                      {currentDomain.config.examples.map((example) => (
-                        <li key={example}>{example}</li>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {activeExamples.map((example: string, idx: number) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const currentVal = inputValue || "";
+                            const newValue = currentVal.trim() ? `${currentVal.trim()}\n- ${example}` : `- ${example}`;
+                            setInputValue(newValue);
+                            mainInputRef.current?.focus();
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+                            e.currentTarget.style.color = "#ffffff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                            e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                          }}
+                          style={{ textAlign: "left", padding: "12px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.8)", fontSize: "14px", cursor: "pointer", transition: "all 0.2s ease", display: "flex", alignItems: "flex-start", gap: "12px", width: "100%" }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}>
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          <span style={{ lineHeight: "1.4" }}>{example}</span>
+                        </button>
                       ))}
-                    </ul>
+                    </div>
                   </div>
 
                   <div className={styles["question-card"]}>
-                    <h2 className={styles["question-title"]}>
-                      {currentDomain.config.title}: {currentQuestion.label}?
+                    <h2 className={styles["question-title"]} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      {currentDomain.config.title}: {baseQuestion.label}
                       {isUsingAIQuestions ? (
-                        <span style={{
-                          marginLeft: "8px",
-                          fontSize: "14px",
-                          opacity: 0.9,
-                          fontWeight: "normal",
-                          color: "#10b981"
-                        }}>
+                        <span style={{ fontSize: "12px", opacity: 0.9, fontWeight: "normal", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", padding: "2px 8px", borderRadius: "12px" }}>
                           ✓ AI-Generated
                         </span>
                       ) : (
-                        <span style={{
-                          marginLeft: "8px",
-                          fontSize: "14px",
-                          opacity: 0.7,
-                          fontWeight: "normal",
-                          color: "#fbbf24"
-                        }}>
+                        <span style={{ fontSize: "12px", opacity: 0.7, fontWeight: "normal", color: "#fbbf24", background: "rgba(251, 191, 36, 0.1)", padding: "2px 8px", borderRadius: "12px" }}>
                           (Sample Question)
                         </span>
                       )}
                     </h2>
-                    <p className={styles["question-prompt"]}>
-                      {currentQuestion.prompt}
-                    </p>
+
+                    <div className={styles["question-prompt"]} style={{ marginBottom: "16px" }}>
+                      {isUsingAIQuestions ? (
+                        <>
+                          <span style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>
+                            {aiQuestionObj.question}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.7)' }}>
+                            {activePrompt}
+                          </span>
+                        </>
+                      ) : (
+                        activePrompt
+                      )}
+                    </div>
+
                     <textarea
                       ref={mainInputRef}
                       className={styles["reflection-input"]}
-                      placeholder={currentQuestion.placeholder}
+                      placeholder={aiQuestionObj?.guidance || baseQuestion.placeholder}
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       rows={4}
                     />
-                    {/** <!-- ④ AI AFFIRMATION — hidden until user submits ↑ -->**/}
 
                     <button
                       className={styles["submit-btn"]}
                       onClick={handleSubmitAnswer}
                       disabled={isStepSubmitted && !isEditingExisting}
-                      style={
-                        isStepSubmitted && !isEditingExisting
-                          ? {
-                            opacity: 0.5,
-                            cursor: "not-allowed",
-                            background: "#555",
-                            color: "#aaa",
-                            pointerEvents: "none",
-                          }
-                          : undefined
-                      }
+                      style={isStepSubmitted && !isEditingExisting ? { opacity: 0.5, cursor: "not-allowed", background: "#555", color: "#aaa", pointerEvents: "none" } : undefined}
                     >
-                      {isStepSubmitted && !isEditingExisting
-                        ? "✓ Answer Submitted"
-                        : isEditingExisting
-                          ? "Save Main Answer"
-                          : "Submit Answer"}
+                      {isStepSubmitted && !isEditingExisting ? "✓ Answer Submitted" : isEditingExisting ? "Save Main Answer" : "Submit Answer"}
                     </button>
                   </div>
                   {(isStepSubmitted || isEditingExisting) && (
                     <>
-                      <div
-                        className={styles["block-affirmation"]}
-                        id="affirmationBlock"
-                      >
+                      <div className={styles["block-affirmation"]} id="affirmationBlock">
                         <div className={styles["aff-row"]}>
                           <div className={styles["aff-av"]}>✦</div>
-                          <div
-                            className={styles["aff-bubble"]}
-                            id="affirmationText"
-                          >
-                            That reflects a strong sense of intentionality and
-                            growth across multiple areas of your life. You're
-                            not only building consistent habits, but also
-                            integrating what you're learning into how you live
-                            and relate to others. There's a meaningful sense of
-                            forward movement as you explore what a full and
-                            healthy life looks like in this new season.
+                          <div className={styles["aff-bubble"]} id="affirmationText">
+                            That reflects a strong sense of intentionality and growth across multiple areas of your life. You're not only building consistent habits, but also integrating what you're learning into how you live and relate to others. There's a meaningful sense of forward movement as you explore what a full and healthy life looks like in this new season.
                           </div>
                         </div>
                       </div>
 
-                      <div
-                        className={styles["block-followup"]}
-                        id="followupBlock"
-                      >
-                        <div className={styles["bf-label"]}>
-                          ✦ Follow-Up Question
-                        </div>
+                      <div className={styles["block-followup"]} id="followupBlock">
+                        <div className={styles["bf-label"]}>✦ Follow-Up Question</div>
+
                         <div className={styles["bf-text"]}>
-                          What feels most impactful or encouraging about these
-                          areas that are going well right now?
+                          {isGeneratingFollowUp ? (
+                            <span style={{ color: "#10b981" }}>
+                              Generating thoughtful follow-up...
+                            </span>
+                          ) : (
+                            dynamicFollowUp || getFallbackFollowUp(baseQuestion.column)
+                          )}
                         </div>
+
                         <textarea
                           className={styles["bf-textarea"]}
                           id="followupAnswer"
                           placeholder="Share your response here..."
                           value={followupValue}
                           onChange={(e) => setFollowupValue(e.target.value)}
+                          disabled={isGeneratingFollowUp}
                         />
                         <button
                           className={styles["bf-submit"]}
                           onClick={handleFollowupSubmit}
+                          disabled={isGeneratingFollowUp}
                         >
-                          {isEditingExisting
-                            ? "Save Follow-up Update"
-                            : "Submit & Move to Next Question →"}
+                          {isEditingExisting ? "Save Follow-up Update" : "Submit & Move to Next Question →"}
                         </button>
                         {isEditingExisting && (
                           <button
@@ -1511,41 +1061,14 @@ const WhereIAmNow = () => {
                   )}
                 </>
               )}
-
-              {/* FIX 1: Affirmation + AI follow-up ONLY appear AFTER user has submitted an answer */}
             </section>
 
             <section className={styles["table-panel"]}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "15px",
-                  color: "#fff",
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "15px", color: "#fff" }}>
                 View My Progress
                 <div style={{ display: "flex", gap: "10px" }}>
-                  <button
-                    type="button"
-                    onClick={handleResetTable}
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#fff",
-                      borderRadius: "8px",
-                      fontSize: "0.8rem",
-                      padding: "6px 10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Reset Table
-                  </button>
-                  <span style={{ display: "flex", gap: "5px" }}>
-                    {answeredCount} <span> of</span>{" "}
-                    <span style={{ color: "var(--gs)" }}>{totalQuestions}</span>
-                  </span>
+                  <button type="button" onClick={handleResetTable} style={{ border: "1px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.06)", color: "#fff", borderRadius: "8px", fontSize: "0.8rem", padding: "6px 10px", cursor: "pointer" }}>Reset Table</button>
+                  <span style={{ display: "flex", gap: "5px" }}>{answeredCount} <span> of</span> <span style={{ color: "var(--gs)" }}>{totalQuestions}</span></span>
                 </div>
               </div>
 
@@ -1556,43 +1079,20 @@ const WhereIAmNow = () => {
                 lastUpdatedCell={lastUpdatedCell}
                 handleEditQuestion={handleEditQuestion}
                 domains={domains}
-                questionFlow={effectiveQuestionFlow}
+                questionFlow={questionFlow}
               />
             </section>
 
             {isTableComplete && (
               <>
                 <div className={styles["analysis-section"]}>
-                  <div className={styles["as-title"]}>
-                    Final Reflection Notes
-                  </div>
-                  <textarea
-                    className={styles["analysis-textarea"]}
-                    value={analysis}
-                    onChange={(e) => setAnalysis(e.target.value)}
-                    placeholder="Capture any summary insights from your assessment before continuing."
-                    rows={6}
-                  />
+                  <div className={styles["as-title"]}>Final Reflection Notes</div>
+                  <textarea className={styles["analysis-textarea"]} value={analysis} onChange={(e) => setAnalysis(e.target.value)} placeholder="Capture any summary insights from your assessment before continuing." rows={6} />
                 </div>
-
                 <div className={styles["save-actions"]}>
-                  <button
-                    onClick={handleUnlockPerspective}
-                    className={styles["btn-complete"]}
-                  >
-                    Continue to Perspective
-                  </button>
-
-                  <button className={styles["btn-pdf"]} onClick={generatePDF}>
-                    Download PDF Report
-                  </button>
-
-                  <button
-                    className={styles["btn-ghost"]}
-                    onClick={() => navigate("/dashboard")}
-                  >
-                    Back to Dashboard
-                  </button>
+                  <button onClick={handleUnlockPerspective} className={styles["btn-complete"]}>Continue to Perspective</button>
+                  <button className={styles["btn-pdf"]} onClick={generatePDF}>Download PDF Report</button>
+                  <button className={styles["btn-ghost"]} onClick={() => navigate("/dashboard")}>Back to Dashboard</button>
                 </div>
               </>
             )}
@@ -1600,75 +1100,20 @@ const WhereIAmNow = () => {
         </div>
       </div>
 
-      {/* Restart Confirmation Dialog */}
       {showRestartConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: "30px",
-              borderRadius: "8px",
-              maxWidth: "400px",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-            }}
-          >
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "white", padding: "30px", borderRadius: "8px", maxWidth: "400px", boxShadow: "0 10px 40px rgba(0,0,0,0.3)" }}>
             <h3 style={{ marginTop: 0, color: "#d32f2f" }}>Confirm Module Restart</h3>
-            <p>
-              This will permanently delete all your answers and follow-up notes for this module.
-              <strong> This action cannot be undone.</strong>
-            </p>
+            <p>This will permanently delete all your answers and follow-up notes for this module.<strong> This action cannot be undone.</strong></p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                onClick={() => setShowRestartConfirm(false)}
-                style={{
-                  padding: "10px 20px",
-                  background: "#f5f5f5",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRestart}
-                style={{
-                  padding: "10px 20px",
-                  background: "#d32f2f",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Confirm Reset
-              </button>
+              <button onClick={() => setShowRestartConfirm(false)} style={{ padding: "10px 20px", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: "4px", cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleConfirmRestart} style={{ padding: "10px 20px", background: "#d32f2f", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Confirm Reset</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SYNTHESIS CONFIRMATION MODAL */}
-      <SynthesisConfirmationModal
-        isOpen={showSynthesisModal}
-        title={`Confirm: ${synthesisData?.domain || ""}`}
-        synthesizedText={synthesisData?.synthesized || ""}
-        onConfirm={handleSynthesisConfirm}
-        onEdit={handleSynthesisEdit}
-      />
+      <SynthesisConfirmationModal isOpen={showSynthesisModal} title={`Confirm: ${synthesisData?.domain || ""}`} synthesizedText={synthesisData?.synthesized || ""} onConfirm={handleSynthesisConfirm} onEdit={handleSynthesisEdit} />
     </div>
   );
 };

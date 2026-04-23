@@ -29,37 +29,47 @@ interface GettingStartedData {
 
 interface DomainGoal {
   key: keyof Omit<GettingStartedData, "progress">;
+  subtitle: string;
   label: string;
   field: string;
   examples: string[];
 }
 
+const OVERALL_GOAL_PROMPT = {
+  options: [
+    "Learning more about myself - my wiring, strengths, motivations, challenges, heart desires",
+    "Seeking God's will for the upcoming season in my life",
+    "Creating a clear, actionable plan that is aligned with my purpose and passions"
+  ]
+};
+
 const fallbackDomainGoals: DomainGoal[] = [
+  {
+    key: "overallGoal",
+    label: "What brings you here?",
+    subtitle: "At this season of your life, what do you hope developing a LifePlan will support or make possible?",
+    field: "overallGoalComplete",
+    examples: [
+      "Learning more about myself - my wiring, strengths, motivations, challenges",
+      "Seeking God's will for the upcoming season in my life",
+      "Creating a clear, actionable plan that is aligned with my purpose",
+    ],
+  },
   {
     key: "goalPersonal",
     label: "Personal Domain",
+    subtitle: "Consider your physical health, emotional wellbeing, intellectual growth, and spiritual life. What would thriving look like?",
     field: "personalDomainComplete",
     examples: [
       "Developing receptivity to change and growth",
       "Increasing self-awareness about emotions",
-      "Discerning actions needed for the upcoming season",
       "Creating a structured plan aligned with desires and purpose",
-    ],
-  },
-  {
-    key: "goalFamilyFriends",
-    label: "Family & Friends Domain",
-    field: "familyDomainComplete",
-    examples: [
-      "Achieving unity with spouse on important issues",
-      "Identifying time and energy changes needed for relationships",
-      "Developing more friendships",
-      "Deepening existing relationships",
     ],
   },
   {
     key: "goalChurchKingdom",
     label: "Church & Kingdom Domain",
+    subtitle: "Consider your faith practice, ministry, calling, discipleship, and spiritual community. What would meaningful involvement look like?",
     field: "churchDomainComplete",
     examples: [
       "Finding a church home or deepening church involvement",
@@ -71,6 +81,7 @@ const fallbackDomainGoals: DomainGoal[] = [
   {
     key: "goalVocation",
     label: "Vocation Domain",
+    subtitle: "Consider your career, work, daily responsibilities, and professional growth. What would success look like?",
     field: "vocationDomainComplete",
     examples: [
       "Aligning work with strengths and passions",
@@ -82,6 +93,7 @@ const fallbackDomainGoals: DomainGoal[] = [
   {
     key: "goalCommunity",
     label: "Community Domain",
+    subtitle: "Consider your neighborhood, civic engagement, volunteer work, and giving back. What would meaningful contribution look like?",
     field: "communityDomainComplete",
     examples: [
       "Finding ways to give back locally",
@@ -124,141 +136,44 @@ const GettingStarted: React.FC = () => {
   const { questions: aiQuestionsRaw, loading: aiLoading, error: aiError } = useGettingStartedQuestions(token);
   console.log("[GettingStarted] AI questions state - loading:", aiLoading, "questions:", aiQuestionsRaw);
 
-  // Transform AI questions to domainGoals format
-  const transformAIQuestions = (aiQuestions: any): DomainGoal[] | null => {
-    console.log("[GettingStarted] Attempting transform with:", {
-      type: typeof aiQuestions,
-      isArray: Array.isArray(aiQuestions),
-      isObject: typeof aiQuestions === 'object',
-      length: aiQuestions?.length,
-      sample: Array.isArray(aiQuestions) ? aiQuestions[0] : null,
-    });
+  const transformAIQuestions = (aiQuestionsRaw: any): DomainGoal[] | null => {
+    const questions = Array.isArray(aiQuestionsRaw)
+      ? aiQuestionsRaw
+      : aiQuestionsRaw?.questions;
 
-    // Handle ARRAY format from API (array of questions with domain field)
-    if (Array.isArray(aiQuestions) && aiQuestions.length > 0) {
-      console.log("[GettingStarted] Processing array format questions");
-
-      // Group questions by domain
-      const questionsByDomain: Record<string, any[]> = {};
-      aiQuestions.forEach((q: any) => {
-        const domainKey = q.domain?.toLowerCase() || "unknown";
-        if (!questionsByDomain[domainKey]) {
-          questionsByDomain[domainKey] = [];
-        }
-        questionsByDomain[domainKey].push(q);
-      });
-
-      console.log("[GettingStarted] Grouped by domain:", Object.keys(questionsByDomain));
-
-      // Map domain names to data field keys
-      const keyMap: Record<string, string> = {
-        personal: "goalPersonal",
-        family: "goalFamilyFriends",
-        church: "goalChurchKingdom",
-        vocation: "goalVocation",
-        community: "goalCommunity",
-        overall: "overallGoal",
-      };
-
-      const labelMap: Record<string, string> = {
-        personal: "Personal Domain",
-        family: "Family & Friends Domain",
-        church: "Church & Kingdom Domain",
-        vocation: "Vocation Domain",
-        community: "Community Domain",
-        overall: "Overall Goal",
-      };
-
-      const fieldMap: Record<string, string> = {
-        personal: "personalDomainComplete",
-        family: "familyDomainComplete",
-        church: "churchDomainComplete",
-        vocation: "vocationDomainComplete",
-        community: "communityDomainComplete",
-        overall: "overallGoalComplete",
-      };
-
-      const result = Object.entries(questionsByDomain).map(([domainKey, questions]: [string, any[]]) => {
-        const examples = questions.slice(0, 4).map((q: any) => q.question || q.prompt || "");
-
-        return {
-          key: keyMap[domainKey] as any,
-          label: labelMap[domainKey] || domainKey,
-          field: fieldMap[domainKey] as any,
-          examples: examples.filter(Boolean),
-        };
-      });
-
-      console.log("[GettingStarted] Successfully transformed array to domains:", result.map(d => ({
-        key: d.key,
-        label: d.label,
-        examplesCount: d.examples.length,
-        firstExample: d.examples[0],
-      })));
-
-      return result;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return null;
     }
 
-    // Handle OBJECT format from API (organized by domain)
-    if (aiQuestions && typeof aiQuestions === 'object' && !Array.isArray(aiQuestions)) {
-      console.log("[GettingStarted] Processing object format questions");
+    const keyMap: Record<string, keyof Omit<GettingStartedData, "progress">> = {
+      overall: "overallGoal",
+      personal: "goalPersonal",
+      family: "goalFamilyFriends",
+      church: "goalChurchKingdom",
+      vocation: "goalVocation",
+      community: "goalCommunity",
+    };
 
-      const domains = Object.entries(aiQuestions) as [string, any][];
+    const fieldMap: Record<string, string> = {
+      overall: "overallGoalComplete",
+      personal: "personalDomainComplete",
+      family: "familyDomainComplete",
+      church: "churchDomainComplete",
+      vocation: "vocationDomainComplete",
+      community: "communityDomainComplete",
+    };
 
-      const keyMap: Record<string, string> = {
-        personal: "goalPersonal",
-        family: "goalFamilyFriends",
-        church: "goalChurchKingdom",
-        vocation: "goalVocation",
-        community: "goalCommunity",
-        overall: "overallGoal",
+    return questions.map((q: any) => {
+      const domainKey = q.domain?.toLowerCase() || "unknown";
+
+      return {
+        key: keyMap[domainKey] || `goal${domainKey.charAt(0).toUpperCase() + domainKey.slice(1)}`,
+        label: q.question || `${domainKey.charAt(0).toUpperCase() + domainKey.slice(1)} Domain`,
+        subtitle: q.prompt || "What are your goals for this area?", // <-- Mapped correctly
+        field: fieldMap[domainKey] || `${domainKey}DomainComplete`,
+        examples: q.examples || [], // <-- Kept clean
       };
-
-      const labelMap: Record<string, string> = {
-        personal: "Personal Domain",
-        family: "Family & Friends Domain",
-        church: "Church & Kingdom Domain",
-        vocation: "Vocation Domain",
-        community: "Community Domain",
-        overall: "Overall Goal",
-      };
-
-      const fieldMap: Record<string, string> = {
-        personal: "personalDomainComplete",
-        family: "familyDomainComplete",
-        church: "churchDomainComplete",
-        vocation: "vocationDomainComplete",
-        community: "communityDomainComplete",
-        overall: "overallGoalComplete",
-      };
-
-      const result = domains.map(([domainKey, domainQuestions]: [string, any]) => {
-        const examples = (domainQuestions[0]?.examples || []).slice(0, 4);
-
-        return {
-          key: keyMap[domainKey] as any,
-          label: labelMap[domainKey] || domainKey,
-          field: fieldMap[domainKey] as any,
-          examples: examples,
-        };
-      });
-
-      console.log("[GettingStarted] Successfully transformed object to domains:", result.map(d => ({
-        key: d.key,
-        label: d.label,
-        examplesCount: d.examples.length,
-        firstExample: d.examples[0],
-      })));
-
-      return result;
-    }
-
-    console.log("[GettingStarted] Transform failed - unexpected format:", {
-      isObject: typeof aiQuestions === 'object',
-      isArray: Array.isArray(aiQuestions),
-      isEmpty: !aiQuestions || (Array.isArray(aiQuestions) && aiQuestions.length === 0),
     });
-    return null; // Return null if format doesn't match, so we know it's fallback
   };
 
   const transformedAIQuestions = aiQuestionsRaw ? transformAIQuestions(aiQuestionsRaw) : null;
@@ -722,22 +637,102 @@ const GettingStarted: React.FC = () => {
             </div>
           )}
 
-          {/* Step 1: Overall Goal */}
           {currentStep === "overall" && (
             <div className={styles.card}>
-              <h2>What brings you here?</h2>
-              <p className={styles["card-subtitle"]}>
-                At this season of your life, what do you hope developing a LifePlan will
-                support or make possible?
-              </p>
+              {(() => {
+                const overallData = domainGoals.find(d => d.key === "overallGoal");
+                return (
+                  <>
+                    <h2 style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
+                      {overallData?.label || "What brings you here?"}
+                      {isUsingAIQuestions && (
+                        <span style={{
+                          marginLeft: "12px",
+                          fontSize: "12px",
+                          opacity: 0.9,
+                          fontWeight: "normal",
+                          color: "#10b981",
+                          background: "rgba(16, 185, 129, 0.1)",
+                          padding: "2px 8px",
+                          borderRadius: "12px"
+                        }}>
+                          ✓ AI-Generated
+                        </span>
+                      )}
+                    </h2>
+
+                    <p className={styles["card-subtitle"]}>
+                      {overallData?.subtitle || "At this season of your life, what do you hope developing a LifePlan will support or make possible?"}
+                    </p>
+
+                    <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>
+                      Click the examples below to add them to your goal, or type your own response.
+                    </p>
+
+                    {overallData?.examples && overallData.examples.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+                        {overallData.examples.map((option, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const currentVal = data.overallGoal || "";
+                              const newValue = currentVal.trim()
+                                ? `${currentVal.trim()}\n- ${option}`
+                                : `- ${option}`;
+
+                              setData({ ...data, overallGoal: newValue });
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+                              e.currentTarget.style.color = "#ffffff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                              e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                            }}
+                            style={{
+                              textAlign: "left",
+                              padding: "14px 16px",
+                              background: "rgba(255,255,255,0.03)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: "10px",
+                              color: "rgba(255,255,255,0.8)",
+                              fontSize: "14px",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: "12px",
+                              width: "100%"
+                            }}
+                          >
+                            <svg
+                              width="18" height="18" viewBox="0 0 24 24"
+                              fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                              style={{ flexShrink: 0, marginTop: "1px" }}
+                            >
+                              <line x1="12" y1="5" x2="12" y2="19"></line>
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span style={{ lineHeight: "1.4" }}>{option}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               <div className={styles["textarea-wrapper"]}>
                 <textarea
                   value={data.overallGoal}
-                  onChange={(e) => {
-                    setData({ ...data, overallGoal: e.target.value });
-                  }}
-                  placeholder="Type your response here..."
+                  onChange={(e) => setData({ ...data, overallGoal: e.target.value })}
+                  placeholder="Select options above or type your own response here..."
+                  style={{ minHeight: '120px' }}
                 />
               </div>
 
@@ -750,10 +745,9 @@ const GettingStarted: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    // Show synthesis confirmation before saving
                     handleShowSynthesis("overallGoal", data.overallGoal);
                   }}
-                  disabled={!data.overallGoal.trim() || saving}
+                  disabled={!data.overallGoal.trim() || saving || aiLoading}
                   className={`${styles.btn} ${styles["btn-primary"]}`}
                 >
                   {saving ? "Saving..." : "Continue"}
@@ -815,8 +809,18 @@ const GettingStarted: React.FC = () => {
 
               <div className={styles["domain-grid"]}>
                 {domainGoalsForStep.map((domain) => (
-                  <div key={domain.key} className={styles["domain-card"]}>
-                    <h3>
+                  <div
+                    key={domain.key}
+                    className={styles["domain-card"]}
+                    style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      marginBottom: '24px'
+                    }}
+                  >
+                    <h3 style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}>
                       {domain.label}
                       {isUsingAIQuestions ? (
                         <span style={{
@@ -824,7 +828,10 @@ const GettingStarted: React.FC = () => {
                           fontSize: "12px",
                           opacity: 0.9,
                           fontWeight: "normal",
-                          color: "#10b981"
+                          color: "#10b981",
+                          background: "rgba(16, 185, 129, 0.1)",
+                          padding: "2px 8px",
+                          borderRadius: "12px"
                         }}>
                           ✓ AI-Generated
                         </span>
@@ -834,28 +841,91 @@ const GettingStarted: React.FC = () => {
                           fontSize: "12px",
                           opacity: 0.7,
                           fontWeight: "normal",
-                          color: "#fbbf24"
+                          color: "#fbbf24",
+                          background: "rgba(251, 191, 36, 0.1)",
+                          padding: "2px 8px",
+                          borderRadius: "12px"
                         }}>
                           (Sample Questions)
                         </span>
                       )}
                     </h3>
-                    <div className={styles["domain-examples"]}>Examples:</div>
-                    <ul>
+
+                    <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>
+                      Click the examples below to add them to your goal, or type your own.
+                    </p>
+
+                    {/* Interactive Examples List */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
                       {domain.examples.map((ex, idx) => (
-                        <li key={idx}>{ex}</li>
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const currentVal = data[domain.key] || "";
+                            // Append to new line with a bullet point
+                            const newValue = currentVal.trim()
+                              ? `${currentVal.trim()}\n- ${ex}`
+                              : `- ${ex}`;
+
+                            setData({
+                              ...data,
+                              [domain.key]: newValue,
+                            });
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+                            e.currentTarget.style.color = "#ffffff";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                            e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                          }}
+                          style={{
+                            textAlign: "left",
+                            padding: "12px 16px",
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "8px",
+                            color: "rgba(255,255,255,0.8)",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "12px",
+                            width: "100%"
+                          }}
+                        >
+                          <svg
+                            width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                            style={{ flexShrink: 0, marginTop: "2px" }}
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          <span style={{ lineHeight: "1.4" }}>{ex}</span>
+                        </button>
                       ))}
-                    </ul>
-                    <textarea
-                      value={data[domain.key]}
-                      onChange={(e) => {
-                        setData({
-                          ...data,
-                          [domain.key]: e.target.value,
-                        });
-                      }}
-                      placeholder="Share your goal for this domain..."
-                    />
+                    </div>
+
+                    <div className={styles["textarea-wrapper"]}>
+                      <textarea
+                        value={data[domain.key]}
+                        onChange={(e) => {
+                          setData({
+                            ...data,
+                            [domain.key]: e.target.value,
+                          });
+                        }}
+                        placeholder={`Describe your goals for the ${domain.label.replace(' Domain', '')} domain...`}
+                        style={{ minHeight: '100px' }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
