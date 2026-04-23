@@ -106,7 +106,7 @@ Return ONLY valid JSON. No explanations, no extra text.`;
       const userContext = `Generate a getting started question for the "${domain.label}" domain. Context: ${domain.context}. User: ${firstName}.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5.4-turbo",
+        model: "gpt-5.4",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContext },
@@ -192,7 +192,7 @@ JSON FORMAT (REQUIRED):
 ]`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-turbo",
+      model: "gpt-5.4",
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -303,7 +303,7 @@ Generate assessment prompts for all 5 domains using the deterministic framework.
 Remember: NEVER start the prompt with their name. Put it in the middle or at the end.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-turbo",
+      model: "gpt-5.4",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userContext },
@@ -375,7 +375,7 @@ User response: "${userResponse}"
 Follow-up number: ${followUpCount + 1} of 2`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-turbo",
+      model: "gpt-5.4",
       messages: [{ role: "system", content: systemPrompt }],
       temperature: 0.75,
     });
