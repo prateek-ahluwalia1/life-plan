@@ -85,7 +85,6 @@ const sendMessage = async (req: AuthenticatedRequest, res: Response) => {
       model: "gpt-5.4",
       messages,
       temperature: 0.7,
-      max_tokens: 2000,
     });
 
     if (!response.choices || response.choices.length === 0) {

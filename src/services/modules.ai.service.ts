@@ -1,7 +1,4 @@
 import { openai } from "../config/openai";
-import type {
-  GettingStartedModulesPayload,
-} from "../types/gettingStartedModules";
 import type { WhereIAmNowPayload } from "../types/whereIAmNow";
 
 interface AIQuestion {
@@ -9,10 +6,10 @@ interface AIQuestion {
   domain: string;
   question: string;
   prompt: string;
-  guidance: string;
+  guidance?: string;
   examples: string[];
+  core?: string;
 }
-
 
 const validateAIResponse = <T>(
   data: unknown,
@@ -63,6 +60,11 @@ export const generateGettingStartedQuestions = async (
 
   try {
     const domains = [
+      {
+        id: "overall",
+        label: "Orientation",
+        context: "The user's overarching hope or objective for the entire LifePlan process. This is the 'big picture' goal."
+      },
       { id: "personal", label: "Personal", context: "physical health, emotional wellbeing, intellectual growth, and spiritual life" },
       { id: "family", label: "Family & Friends", context: "spouse, children, parents, extended family, and close friends" },
       { id: "church", label: "Church & Kingdom", context: "faith practice, ministry, calling, discipleship, and spiritual community" },
@@ -73,7 +75,7 @@ export const generateGettingStartedQuestions = async (
     const systemPrompt = `You are a thoughtful guide helping people reflect on their life goals. Generate a thoughtful, personalized question for ONE specific life domain.
 
 CRITICAL NAME PLACEMENT RULES:
-❌ FORBIDDEN: You must NEVER start the question with the user's name. Do NOT write "${firstName}, [question]".
+❌ FORBIDDEN: You must NEVER start the question with the user's name. Do NOT write "[Name], [question]".
 ✅ REQUIRED: You must place the name in the MIDDLE or at the END of the question.
 
 EXAMPLES OF REQUIRED FORMAT:
@@ -82,72 +84,63 @@ EXAMPLES OF REQUIRED FORMAT:
 
 OTHER REQUIREMENTS:
 ✅ The question must be warm, open-ended, and inviting
-✅ Include a brief prompt (1-2 sentences explaining what to reflect on)
+✅ Include a brief prompt (1-2 sentences explaining what to consider)
 ✅ Include guidance (1 sentence on how to approach the reflection)
 ✅ Provide 4 concrete, relatable examples
+
+SPECIAL INSTRUCTION FOR "Orientation" DOMAIN:
+If the domain is "Orientation", the question should ask "What brings you here?" or "What do you hope this LifePlan supports?". 
+The 4 examples must be distinct high-level objectives (e.g., "Learning more about myself", "Seeking God's will", "Creating an actionable plan").
 
 REQUIRED JSON FORMAT:
 {
   "question": "[your question here, strictly following the name placement rules above]",
   "prompt": "Brief explanation of what to consider",
   "guidance": "How to approach this reflection",
-  "examples": ["Example 1", "Example 2", "Example 3", "Example 4"]
+  "examples": ["Option 1", "Option 2", "Option 3", "Option 4"]
 }
 
 Return ONLY valid JSON. No explanations, no extra text.`;
 
-    const questions: AIQuestion[] = [];
-    for (const domain of domains) {
-      const userContext = `Generate a getting started question for the "${domain.label}" domain (${domain.context}). 
-The user is: ${firstName}
-Remember: NEVER start the question with their name. Put it in the middle or at the end.`;
+    const promises = domains.map(async (domain) => {
+      const userContext = `Generate a getting started question for the "${domain.label}" domain. Context: ${domain.context}. User: ${firstName}.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5.4",
+        model: "gpt-5.4-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContext },
         ],
         temperature: 0.6,
-        max_tokens: 500,
+        response_format: { type: "json_object" }
       });
 
       const content = response.choices[0]?.message?.content || "{}";
-      const parsed = safeJsonParse(content) as {
-        question?: string;
-        prompt?: string;
-        guidance?: string;
-        examples?: string[];
-      };
+      const parsed = safeJsonParse(content) as any;
 
-      if (parsed?.question && parsed?.prompt && parsed?.examples) {
-        questions.push({
+      if (parsed?.question) {
+        return {
           id: domain.id,
           domain: domain.id,
           question: parsed.question,
           prompt: parsed.prompt,
-          guidance: parsed.guidance || "Reflect honestly on your situation.",
+          guidance: parsed.guidance || "Reflect honestly.",
           examples: Array.isArray(parsed.examples) ? parsed.examples : [],
-        });
-        console.log(`[generateGettingStartedQuestions] Generated question for domain: ${domain.id}`);
-      } else {
-        console.warn(`[generateGettingStartedQuestions] Failed to parse response for domain: ${domain.id}, using fallback`);
-        const fallback = getGettingStartedFallbackQuestions(firstName);
-        const fallbackForDomain = fallback.find((q) => q.domain === domain.id);
-        if (fallbackForDomain) {
-          questions.push(fallbackForDomain);
-        }
+        };
       }
-    }
-    if (questions.length === 5) {
-      console.log("[generateGettingStartedQuestions] Successfully generated all 5 domain questions");
-      return questions;
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    const validQuestions = results.filter((q) => q !== null);
+
+    if (validQuestions.length === 6) {
+      return validQuestions;
     } else {
-      console.warn(`[generateGettingStartedQuestions] Generated only ${questions.length} questions, using full fallback`);
       return getGettingStartedFallbackQuestions(firstName);
     }
   } catch (error) {
-    console.error("Generate Getting Started questions error:", error);
+    console.error("AI Generation Error:", error);
     return getGettingStartedFallbackQuestions(firstName);
   }
 };
@@ -195,12 +188,11 @@ JSON FORMAT (REQUIRED):
     "prompt": "The full question with context (1-2 sentences)",
     "guidance": "How to think about this (1 sentence)",
     "examples": ["Example response 1", "Example response 2"]
-  },
-  {...}
+  }
 ]`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4",
+      model: "gpt-5.4-turbo",
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -213,7 +205,6 @@ Generate 2-3 clarifying follow-up questions. Remember: NEVER start the question 
         },
       ],
       temperature: 0.8,
-      max_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content || "[]";
@@ -266,10 +257,38 @@ DOMAINS (EXACT ORDER - DO NOT REORDER):
 JSON FORMAT (REQUIRED):
 {
   "personal": [
-    { "id": "p_right", "core": "right", "prompt": "Prompt about what's RIGHT (name in middle or end)", "examples": [] },
-    { "id": "p_wrong", "core": "wrong", "prompt": "Prompt about what's WRONG (name in middle or end)", "examples": [] },
-    { "id": "p_confused", "core": "confused", "prompt": "Prompt about what's CONFUSED (name in middle or end)", "examples": [] },
-    { "id": "p_missing", "core": "missing", "prompt": "Prompt about what's MISSING (name in middle or end)", "examples": [] }
+    { 
+      "id": "p_right", 
+      "domain": "personal",
+      "core": "right", 
+      "question": "What in your personal life is going well right now, [Name]?", 
+      "prompt": "Think about sleep, movement, nutrition, and how you generally feel.",
+      "examples": [] 
+    },
+    { 
+      "id": "p_wrong", 
+      "domain": "personal",
+      "core": "wrong", 
+      "question": "What in your personal life is not working well, [Name]?", 
+      "prompt": "Consider what feels off, difficult, or draining.",
+      "examples": [] 
+    },
+    { 
+      "id": "p_confused", 
+      "domain": "personal",
+      "core": "confused", 
+      "question": "What feels unclear in your personal life, [Name]?", 
+      "prompt": "Reflect on where you feel conflicted or uncertain.",
+      "examples": [] 
+    },
+    { 
+      "id": "p_missing", 
+      "domain": "personal",
+      "core": "missing", 
+      "question": "What feels absent in your personal life right now, [Name]?", 
+      "prompt": "Consider what is lacking that would make this area healthier.",
+      "examples": [] 
+    }
   ],
   "family": [...],
   "church": [...],
@@ -284,13 +303,13 @@ Generate assessment prompts for all 5 domains using the deterministic framework.
 Remember: NEVER start the prompt with their name. Put it in the middle or at the end.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4",
+      model: "gpt-5.4-turbo",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userContext },
       ],
       temperature: 0.75,
-      max_tokens: 3000,
+      response_format: { type: "json_object" }
     });
 
     const content = response.choices[0]?.message?.content || "{}";
@@ -356,10 +375,9 @@ User response: "${userResponse}"
 Follow-up number: ${followUpCount + 1} of 2`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4",
+      model: "gpt-5.4-turbo",
       messages: [{ role: "system", content: systemPrompt }],
       temperature: 0.75,
-      max_tokens: 250,
     });
 
     const followUp = response.choices[0]?.message?.content || "";
@@ -382,6 +400,18 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
   const firstName = userName.split(" ")[0] || userName || "Friend";
 
   return [
+    {
+      id: "overall",
+      domain: "overall",
+      question: `What brings you here, ${firstName}?`,
+      prompt: "At this season of your life, what do you hope developing a LifePlan will support or make possible?",
+      guidance: "Reflect on your high-level objective.",
+      examples: [
+        "Learning more about myself - my wiring, strengths, motivations, challenges",
+        "Seeking God's will for the upcoming season in my life",
+        "Creating a clear, actionable plan that is aligned with my purpose"
+      ],
+    },
     {
       id: "personal",
       domain: "personal",
@@ -445,89 +475,50 @@ function getGettingStartedFallbackQuestions(userName: string = "Friend"): AIQues
   ];
 }
 
-function getWhereIAmNowFallbackQuestions(userName: string = "Friend"): Record<string, AIQuestion[]> {
+function getWhereIAmNowFallbackQuestions(userName: string = "Friend"): Record<string, any[]> {
   const firstName = userName.split(" ")[0] || userName || "Friend";
 
+  const createFallbackForDomain = (domain: string, title: string) => [
+    {
+      id: `${domain}_right`,
+      domain: domain,
+      core: "right",
+      question: `What in your ${title} is going well right now, ${firstName}?`,
+      prompt: "What has been going well for you in this area?",
+      examples: [],
+    },
+    {
+      id: `${domain}_wrong`,
+      domain: domain,
+      core: "wrong",
+      question: `What is not working well in your ${title}, ${firstName}?`,
+      prompt: "What feels off, difficult, or draining in this area right now?",
+      examples: [],
+    },
+    {
+      id: `${domain}_confused`,
+      domain: domain,
+      core: "confused",
+      question: `What feels unclear in your ${title}, ${firstName}?`,
+      prompt: "Where do you feel unclear, conflicted, or uncertain?",
+      examples: [],
+    },
+    {
+      id: `${domain}_missing`,
+      domain: domain,
+      core: "missing",
+      question: `What feels missing in your ${title} right now, ${firstName}?`,
+      prompt: "What do you sense is absent that would make this area healthier?",
+      examples: [],
+    },
+  ];
+
   return {
-    personal: [
-      {
-        id: "p1",
-        domain: "personal",
-        question: `How are you doing with your physical health and energy right now, ${firstName}?`,
-        prompt:
-          "Think about sleep, movement, nutrition, and how you generally feel in your body.",
-        guidance:
-          "Be honest about where things are. This is your reality check.",
-        examples: [
-          "I've been consistent with exercise",
-          "My sleep has been disrupted lately",
-          "I'm managing stress okay",
-        ],
-      },
-    ],
-    family: [
-      {
-        id: "f1",
-        domain: "family",
-        question: `When reflecting on your inner circle, ${firstName}, how connected do you feel to your closest relationships?`,
-        prompt:
-          "Think about your spouse, children, close friends—whoever matters most.",
-        guidance:
-          "Connection varies—what matters is your honest sense of where things are.",
-        examples: [
-          "We're communicating really well right now",
-          "I feel distant from my spouse",
-          "Friendships feel shallow lately",
-        ],
-      },
-    ],
-    church: [
-      {
-        id: "c1",
-        domain: "church",
-        question: `How engaged do you feel in your spiritual life right now, ${firstName}?`,
-        prompt: "Think about your prayer life, church community, and faith.",
-        guidance:
-          "Engagement ebbs and flows—what matters is being honest about where you are.",
-        examples: [
-          "My faith feels alive and active",
-          "I've been distant from church",
-          "I'm seeking but feeling uncertain",
-        ],
-      },
-    ],
-    vocation: [
-      {
-        id: "v1",
-        domain: "vocation",
-        question: `Does your work feel aligned with your values and strengths, ${firstName}?`,
-        prompt:
-          "Think about your job, calling, daily work—whatever your vocation looks like.",
-        guidance:
-          "Alignment is key. Be honest about where things stand.",
-        examples: [
-          "My work feels purposeful",
-          "I feel unfulfilled in my role",
-          "I'm questioning my career direction",
-        ],
-      },
-    ],
-    community: [
-      {
-        id: "co1",
-        domain: "community",
-        question: `Looking outward, ${firstName}, how present are you in your local community?`,
-        prompt:
-          "Think about your neighborhood, volunteer involvement, civic engagement.",
-        guidance:
-          "Community involvement looks different for everyone. What matters is your honest sense of presence.",
-        examples: [
-          "I'm actively involved locally",
-          "I'm isolated from my community",
-          "I want to be more involved but don't know how",
-        ],
-      },
-    ],
+    personal: createFallbackForDomain("personal", "personal life"),
+    family: createFallbackForDomain("family", "family and friendships"),
+    church: createFallbackForDomain("church", "church and kingdom life"),
+    vocation: createFallbackForDomain("vocation", "vocation"),
+    community: createFallbackForDomain("community", "community life"),
   };
 }
 
