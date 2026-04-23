@@ -35,13 +35,6 @@ interface DomainGoal {
   examples: string[];
 }
 
-const OVERALL_GOAL_PROMPT = {
-  options: [
-    "Learning more about myself - my wiring, strengths, motivations, challenges, heart desires",
-    "Seeking God's will for the upcoming season in my life",
-    "Creating a clear, actionable plan that is aligned with my purpose and passions"
-  ]
-};
 
 const fallbackDomainGoals: DomainGoal[] = [
   {
