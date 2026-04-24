@@ -1,5 +1,5 @@
-export const apiURL = "http://localhost:4000/api/v1/";
-// export const apiURL = "https://yourlifeplanjourney.com/api/v1/";
+// export const apiURL = "http://localhost:4000/api/v1/";
+export const apiURL = "https://yourlifeplanjourney.com/api/v1/";
 export const GOOGLE_CLIENT_ID =
   "423205543558-6uthg6rtlr5ejfc2rl1v9t793pjcg2sp.apps.googleusercontent.com";
 
