@@ -198,12 +198,12 @@ const Dashboard = () => {
     if (mod1Done) {
       return {
         stageName: "Getting Started", title: "Where I Am Now", sub: "Current State Assessment · Module 2 of 10",
-        desc: "Take an honest look at where you stand today across the key domains of life with your AI guide.", link: "/where-i-am-now", actionText: "▶ Open Module"
+        desc: "Take an honest look at where you stand today across the key domains of life with your AI guide.", link: "/introduction", actionText: "▶ Open Module"
       };
     }
     return {
       stageName: "Getting Started", title: "Why I Am Here", sub: "Goals by Domain · Module 1 of 10",
-      desc: "Define your core objectives and clarify what you hope to achieve in your LifePlan.", link: "/introduction", actionText: "▶ Open Module"
+      desc: "Define your core objectives and clarify what you hope to achieve in your LifePlan.", link: "/getting-started", actionText: "▶ Open Module"
     };
   })();
 
@@ -377,7 +377,7 @@ const Dashboard = () => {
 
                   <div className={styles["stage-body-gs"]}>
                     {/* MODULE 1 */}
-                    <Link to="/introduction" style={{ textDecoration: "none" }}>
+                    <Link to="/getting-started" style={{ textDecoration: "none" }}>
                       <div className={`${styles["mod-node"]} ${mod1Done ? styles.completed : mod1Active ? styles.active : styles.locked}`}>
                         <div className={styles["mn-icon-row"]}>
                           <span className={styles["mn-icon"]}>
@@ -393,7 +393,7 @@ const Dashboard = () => {
                     </Link>
 
                     {/* MODULE 2 */}
-                    <Link to={mod2Locked ? "#" : "/where-i-am-now"} style={{ textDecoration: "none", pointerEvents: mod2Locked ? "none" : "auto" }}>
+                    <Link to={mod2Locked ? "#" : "/getting-started"} style={{ textDecoration: "none", pointerEvents: mod2Locked ? "none" : "auto" }}>
                       <div className={`${styles["mod-node"]} ${mod2Done ? styles.completed : mod2Active ? styles.active : styles.locked}`}>
                         <div className={styles["mn-icon-row"]}>
                           <span className={styles["mn-icon"]}>
